@@ -136,12 +136,15 @@ val example = project
     name := "htmx4s-example",
     description := "Example using http4s with scalatags",
     libraryDependencies ++= Dependencies.htmx ++
-      Dependencies.http4sEmber
+      Dependencies.http4sEmber ++
+      Dependencies.http4sScalatags ++
+      Dependencies.scribe
   )
   .dependsOn(constants, scalatags, http4s)
 
 val root = project
   .in(file("."))
+  .disablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(noPublish)
   .settings(

@@ -54,6 +54,8 @@ final class WebjarRoute[F[_]: Sync](
     }
 
 object WebjarRoute:
+  def forHtmx[F[_]: Sync] = WebjarRoute[F](Seq(Webjar.htmx1911))
+
   /** Webjar info required to serve its files. The webjar is expected to be available from
     * the current class loader.
     *

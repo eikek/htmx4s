@@ -1,0 +1,152 @@
+package htmx4s.example
+
+import htmx4s.scalatags.Bundle.*
+import scalatags.Text.all.doctype
+import scalatags.Text.{TypedTag}
+
+object Views:
+
+  def layout(titleStr: String)(content: TypedTag[String]) =
+    doctype("html")(
+      html(
+        head(
+          title(attr.name := s"Contact- $titleStr"),
+          script(attr.src := "/js/htmx/htmx.min.js")
+        ),
+        body(
+          attr.hxBoost := true,
+          h1("Htmx+Scala Contact App"),
+          content
+        )
+      )
+    )
+
+  def notFound =
+    div(
+      h1("Resource not found!"),
+      p(
+        a(attr.href := "/ui/contacts", "Back")
+      )
+    )
+
+  def notFoundPage = layout("Not Found")(notFound)
+
+  def showContact(c: Model.Contact) =
+    div(
+      h1(c.fullName),
+      div(
+        div("Phone:", c.phone.getOrElse("-")),
+        div("Email:", c.email.getOrElse("-"))
+      ),
+      p(
+        a(attr.href := "/ui/contacts/${c.id}/edit", "Edit"),
+        a(attr.href := "/ui/contacts", "Back")
+      )
+    )
+
+  def showContactPage(c: Model.Contact) = layout(c.fullName)(showContact(c))
+
+  def editContact(c: Option[Model.Contact]) =
+    div(
+      form(
+        attr.action := c.fold("/ui/contacts/new")(c => s"/ui/contacts/${c.id}/edit"),
+        attr.method := "POST",
+        fieldset(
+          legend("Contact Values"),
+          p(
+            label(attr.`for` := "email", "Email"),
+            input(
+              attr.name := "email",
+              attr.id := "email",
+              attr.`type` := "email",
+              attr.placeholder := "Email",
+              attr.value := c.flatMap(_.email).getOrElse("")
+            ),
+            span(attr.`class` := "error", "")
+          ),
+          p(
+            label(attr.`for` := "name.first", "First Name"),
+            input(
+              attr.name := "name.first",
+              attr.id := "name.first",
+              attr.`type` := "text",
+              attr.placeholder := "First Name",
+              attr.value := c.map(_.name.first).getOrElse("")
+            ),
+            span(attr.`class` := "error", "")
+          ),
+          p(
+            label(attr.`for` := "name.last", "Last Name"),
+            input(
+              attr.name := "name.last",
+              attr.id := "name.last",
+              attr.`type` := "text",
+              attr.placeholder := "Last Name",
+              attr.value := c.map(_.name.last).getOrElse("")
+            ),
+            span(attr.`class` := "error", "")
+          ),
+          p(
+            label(attr.`for` := "phone", "Phone"),
+            input(
+              attr.name := "phone",
+              attr.id := "phone",
+              attr.`type` := "phone",
+              attr.placeholder := "Phone",
+              attr.value := c.flatMap(_.phone).getOrElse("")
+            ),
+            span(attr.`class` := "error", "")
+          ),
+          button("Save")
+        )
+      ),
+      p(a(attr.href := "/ui/contacts", "Back"))
+    )
+
+  def editContactPage(c: Option[Model.Contact]) =
+    layout(s"Edit ${c.map(_.fullName).getOrElse("")}")(editContact(c))
+
+  def contactListPage(
+      contacts: List[Model.Contact],
+      query: Option[String]
+  ): doctype =
+    layout("Contact Search")(contactList(contacts, query))
+
+  def contactList(
+      contacts: List[Model.Contact],
+      query: Option[String]
+  ): TypedTag[String] =
+    div(
+      form(
+        attr.action := "/ui/contacts",
+        attr.method := "GET",
+        label(attr.`for` := "search", "Search Term"),
+        input(
+          attr.id := "search",
+          attr.`type` := "search",
+          attr.name := "q",
+          attr.value := query.getOrElse("")
+        ),
+        input(attr.`type` := "submit", attr.value := "Search")
+      ),
+      table(
+        thead(
+          tr(th("Id"), th("Name"), th("E-Mail"), th("Phone"), th(""))
+        ),
+        tbody(
+          contacts.map(c =>
+            tr(
+              td(c.id),
+              td(c.fullName),
+              td(c.phone.getOrElse("-")),
+              td(c.phone.getOrElse("-")),
+              td(
+                a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+                a(attr.href := s"/ui/contacts/${c.id}", "View")
+              )
+            )
+          )
+        )
+      ),
+      p(a(attr.href := "/ui/contacts/new", "Add Contact"))
+    )

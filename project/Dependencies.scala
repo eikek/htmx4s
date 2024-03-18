@@ -10,7 +10,13 @@ object Dependencies {
     val munit = "0.7.29"
     val munitCatsEffect = "1.0.7"
     val scalatags = "0.12.0"
+    val scribe = "3.13.0"
   }
+
+  val scribe = Seq(
+    "com.outr" %% "scribe" % V.scribe,
+    "com.outr" %% "scribe-slf4j2" % V.scribe
+  )
 
   val htmx = Seq(
     "org.webjars.npm" % "htmx.org" % V.htmx
