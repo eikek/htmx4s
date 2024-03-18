@@ -1,0 +1,5 @@
+package htmx4s.constants
+
+trait HtmxAttributes extends HtmxCoreAttributes with HtmxAdditionalAttributes
+
+object HtmxAttributes extends HtmxAttributes

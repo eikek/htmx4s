@@ -70,15 +70,40 @@ val buildInfoSettings = Seq(
   buildInfoPackage := "keeper"
 )
 
+val constants = project
+  .in(file("modules/constants"))
+  .enablePlugins(HtmxSourceGeneratorPlugin)
+  .settings(sharedSettings)
+  .settings(testSettings)
+  .settings(scalafixSettings)
+  .settings(
+    name := "htmx4s-constants",
+    description := "Provides htmx constant as scala values",
+    htmxGenerateSettings := HtmxSettings.default
+      .modifyAll(_.withPackage("htmx4s.constants"))
+  )
+
 val scalatags = project
   .in(file("modules/scalatags"))
-  .enablePlugins(HtmxScalatagsGenerator)
+  .enablePlugins(HtmxSourceGeneratorPlugin)
   .settings(sharedSettings)
   .settings(testSettings)
   .settings(scalafixSettings)
   .settings(
     name := "htmx4s-scalatags",
     description := "Provides htmx tags to scalatags",
+    htmxGenerateSettings := HtmxSettings.default
+      .modifyAll(_.disabled)
+      .modifyAll(
+        _.withPackage("htmx4s.scalatags")
+          .withImports(List("scalatags.generic._"))
+          .withNameWrap(n => s"attr($n)")
+          .withTypeParams("[Builder, Output <: FragT, FragT]")
+          .withSuperclasses(List("Util[Builder, Output, FragT]"))
+          .noCompanion
+      )
+      .modifyCoreAttrs(_.enabled)
+      .modifyAdditionalAttrs(_.enabled),
     libraryDependencies ++=
       Dependencies.scalatags
   )
@@ -94,7 +119,7 @@ val http4s = project
     libraryDependencies ++=
       Dependencies.http4s
   )
-  .dependsOn(scalatags)
+  .dependsOn(constants)
 
 val example = project
   .in(file("example"))
@@ -105,7 +130,7 @@ val example = project
     name := "htmx4s-example",
     description := "Example using http4s with scalatags"
   )
-  .dependsOn(scalatags, http4s)
+  .dependsOn(constants, scalatags, http4s)
 
 val root = project
   .in(file("."))
@@ -114,4 +139,4 @@ val root = project
   .settings(
     name := "htmx4s-root"
   )
-  .aggregate(scalatags, http4s, example)
+  .aggregate(constants, scalatags, http4s, example)

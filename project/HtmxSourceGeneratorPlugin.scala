@@ -1,19 +1,20 @@
 import sbt._
 
-object HtmxScalatagsGenerator extends AutoPlugin {
+object HtmxSourceGeneratorPlugin extends AutoPlugin {
 
-  object autoImports {
-    type SectionAnchors = Model.SectionAnchors
-    val SectionAnchors = Model.SectionAnchors
+  object autoImport {
+    type HtmxFileSetting = Model.FileSetting
+    val HtmxFileSetting = Model.FileSetting
+    type HtmxSettings = Model.HtmxSettings
+    val HtmxSettings = Model.HtmxSettings
 
     val htmxRepositoryUrl = settingKey[String]("The git url to the htmx repository")
     val htmxRepositoryRef = settingKey[String]("The git ref to use")
     val htmxRepositoryTarget =
       settingKey[File]("The target directory for downloading htmx repo")
     val htmxReferencePath = settingKey[String]("The path to the reference.md file")
-
-    val htmxSectionAnchors = settingKey[SectionAnchors](
-      "Anchor names in the md file that contain tables of data"
+    val htmxGenerateSettings = settingKey[HtmxSettings](
+      "Configuration to control source code generation"
     )
 
     val htmxDownloadRepository = taskKey[File]("Download htmx repository")
@@ -22,14 +23,14 @@ object HtmxScalatagsGenerator extends AutoPlugin {
     val htmxGenerateSources = taskKey[Seq[File]]("Generate source files")
   }
 
-  import autoImports._
+  import autoImport._
 
   val htmxSettings = Seq(
     htmxRepositoryUrl := "https://github.com/bigskysoftware/htmx",
     htmxRepositoryRef := "v1.9.11",
     htmxRepositoryTarget := (Compile / Keys.target).value / "htmx-repo",
     htmxReferencePath := "www/content/reference.md",
-    htmxSectionAnchors := SectionAnchors(),
+    htmxGenerateSettings := HtmxSettings(),
     htmxDownloadRepository := {
       val logger = Keys.streams.value.log
       val repo = htmxRepositoryUrl.value
@@ -41,50 +42,48 @@ object HtmxScalatagsGenerator extends AutoPlugin {
     htmxParseReferenceDoc := {
       val repo = htmxDownloadRepository.value
       val refmd = htmxReferencePath.value
-      val anchors = htmxSectionAnchors.value
-      MarkdownParser.readAll(repo, refmd, anchors)
+      val settings = htmxGenerateSettings.value
+      MarkdownParser.readAll(repo, refmd, settings)
     },
     htmxGenerateSources := {
       val data = htmxParseReferenceDoc.value
       val out = (Compile / Keys.sourceManaged).value / "htmx-constants"
+      val settings = htmxGenerateSettings.value
       IO.createDirectory(out)
-      val attrFile = Model
-        .Source(
-          "HtmxAttributes",
-          List("scalatags.generic.Attr"),
-          data.attributes.attrs
-        )
-        .writeTo(out, n => s"Attr($n)")
-      val clsFile = Model
-        .Source(
-          "HtmxClasses",
-          List(),
-          data.classes.cls
-        )
-        .writeTo(out, identity)
-      val reqHeaderFile = Model
-        .Source(
-          "HtmxRequestHeaders",
-          List(),
-          data.reqHeader.headers
-        )
-        .writeTo(out, n => s"HtmxHeader($n)")
-      val respHeaderFile = Model
-        .Source(
-          "HtmxResponseHeaders",
-          List(),
-          data.respHeader.headers
-        )
-        .writeTo(out, n => s"HtmxHeader($n)")
-      val eventFile = Model
-        .Source(
-          "HtmxEvents",
-          List(),
-          data.events.events
-        )
-        .writeTo(out, identity)
+      val coreAttrFile = settings.coreAttrs
+        .whenEnabled(s => Model.Source("HtmxCoreAttributes", data.coreAttributes, s))
+        .map(_.writeTo(out))
 
-      Seq(attrFile, clsFile, reqHeaderFile, respHeaderFile, eventFile)
+      val addAttrFile = settings.additionalAttrs
+        .whenEnabled(s =>
+          Model.Source("HtmxAdditionalAttributes", data.additionalAttributes, s)
+        )
+        .map(_.writeTo(out))
+
+      val clsFile = settings.cssClasses
+        .whenEnabled(s => Model.Source("HtmxClasses", data.classes, s))
+        .map(_.writeTo(out))
+
+      val reqHeaderFile = settings.requestHeaders
+        .whenEnabled(s => Model.Source("HtmxRequestHeaders", data.reqHeader, s))
+        .map(_.writeTo(out))
+
+      val respHeaderFile = settings.responseHeaders
+        .whenEnabled(s => Model.Source("HtmxResponseHeaders", data.respHeader, s))
+        .map(_.writeTo(out))
+
+      val eventFile = settings.events
+        .whenEnabled(s => Model.Source("HtmxEvents", data.events, s))
+        .map(_.writeTo(out))
+
+      Seq(
+        coreAttrFile,
+        addAttrFile,
+        clsFile,
+        reqHeaderFile,
+        respHeaderFile,
+        eventFile
+      ).flatten
     },
     Compile / Keys.sourceGenerators += htmxGenerateSources.taskValue
   )
@@ -94,22 +93,69 @@ object HtmxScalatagsGenerator extends AutoPlugin {
 }
 
 object Model {
-  final case class SectionAnchors(
-      coreAttrs: String = "#attributes",
-      additionalAttrs: String = "#attributes-additional",
-      cssClasses: String = "#classes",
-      requestHeaders: String = "#request_headers",
-      responseHeaders: String = "#response_headers",
-      events: String = "#events"
-  )
+  final case class FileSetting(
+      anchor: String,
+      typeParams: String = "",
+      imports: List[String] = Nil,
+      superClasses: List[String] = Nil,
+      packageName: String = "htmx",
+      nameWrap: String => String = identity,
+      createCompanion: Boolean = true,
+      enable: Boolean = true
+  ) {
+    def withImports(refs: List[String]) = copy(imports = refs)
+    def withPackage(name: String) = copy(packageName = name)
+    def withNameWrap(f: String => String) = copy(nameWrap = f)
+    def withTypeParams(p: String) = copy(typeParams = p)
+    def withSuperclasses(sc: List[String]) = copy(superClasses = sc)
+    def noCompanion = copy(createCompanion = false)
+    def disabled = copy(enable = false)
+    def enabled = copy(enable = true)
+    def whenEnabled[A](f: FileSetting => A): Option[A] =
+      if (enable) Some(f(this)) else None
+  }
+  final case class HtmxSettings(
+      coreAttrs: FileSetting = FileSetting("#attributes"),
+      additionalAttrs: FileSetting = FileSetting("#attributes-additional"),
+      cssClasses: FileSetting = FileSetting("#classes"),
+      requestHeaders: FileSetting = FileSetting("#request_headers"),
+      responseHeaders: FileSetting = FileSetting("#response_headers"),
+      events: FileSetting = FileSetting("#events")
+  ) {
+    def modifyCoreAttrs(f: FileSetting => FileSetting) = copy(coreAttrs = f(coreAttrs))
+    def modifyAdditionalAttrs(f: FileSetting => FileSetting) =
+      copy(additionalAttrs = f(additionalAttrs))
+    def modifyCssClasses(f: FileSetting => FileSetting) = copy(cssClasses = f(cssClasses))
+    def modifyRequestHeaders(f: FileSetting => FileSetting) =
+      copy(requestHeaders = f(requestHeaders))
+    def modifyResponseHeaders(f: FileSetting => FileSetting) =
+      copy(responseHeaders = f(responseHeaders))
+    def modifyEvents(f: FileSetting => FileSetting) = copy(events = f(events))
+    def modifyAll(f: FileSetting => FileSetting) = modifyCoreAttrs(f)
+      .modifyAdditionalAttrs(f)
+      .modifyCssClasses(f)
+      .modifyRequestHeaders(f)
+      .modifyResponseHeaders(f)
+      .modifyEvents(f)
+  }
+  object HtmxSettings {
+    def default: HtmxSettings = HtmxSettings()
+  }
 
-  final case class Source(name: String, imports: List[String], vals: List[Const]) {
-    def render(wrap: String => String) = {
-      val imp = imports.map(e => s"import $e").mkString("\n")
-      val prefix = s"trait $name {"
-      val suffix = s"}\nobject $name extends $name"
-      val valDefs = vals.map(_.render(wrap)).mkString("\n")
-      s"""package htmx4s.scalatags
+  final case class Source(name: String, vals: List[Const], settings: FileSetting) {
+    def render = {
+      val imp = settings.imports.map(e => s"import $e").mkString("\n")
+      val superExt =
+        if (settings.superClasses.isEmpty) ""
+        else settings.superClasses.mkString(" extends ", " with ", "")
+
+      val prefix = s"trait $name${settings.typeParams} $superExt {"
+      val suffix =
+        if (settings.createCompanion) s"}\nobject $name extends $name"
+        else "}"
+
+      val valDefs = vals.map(_.render(settings.nameWrap)).mkString("\n")
+      s"""package ${settings.packageName}
          |
          |$imp
          |
@@ -118,9 +164,9 @@ object Model {
          |$suffix""".stripMargin
     }
 
-    def writeTo(dir: File, wrap: String => String): File = {
+    def writeTo(dir: File): File = {
       val file = dir / s"${name}.scala"
-      IO.write(file, render(wrap))
+      IO.write(file, render)
       file
     }
   }
@@ -146,18 +192,13 @@ object Model {
           |  val ${camelCaseName} = ${wrap(nameQuoted)}""".stripMargin
   }
 
-  final case class Attributes(attrs: List[Const])
-  final case class CssClasses(cls: List[Const])
-  final case class RequestHeaders(headers: List[Const])
-  final case class ResponseHeaders(headers: List[Const])
-  final case class Events(events: List[Const])
-
   final case class HtmxConstants(
-      attributes: Attributes,
-      classes: CssClasses,
-      reqHeader: RequestHeaders,
-      respHeader: ResponseHeaders,
-      events: Events
+      coreAttributes: List[Const],
+      additionalAttributes: List[Const],
+      classes: List[Const],
+      reqHeader: List[Const],
+      respHeader: List[Const],
+      events: List[Const]
   )
 }
 
@@ -201,15 +242,16 @@ object MarkdownParser {
   def readAll(
       repo: File,
       referencePath: String,
-      anchors: SectionAnchors
+      settings: HtmxSettings
   ): Model.HtmxConstants = {
     def read(a: String, loadDocs: Boolean) = readTable(repo, referencePath, a, loadDocs)
     HtmxConstants(
-      Attributes(read(anchors.coreAttrs, true) ++ read(anchors.additionalAttrs, true)),
-      CssClasses(read(anchors.cssClasses, false)),
-      RequestHeaders(read(anchors.requestHeaders, false)),
-      ResponseHeaders(read(anchors.responseHeaders, true)),
-      Events(read(anchors.events, false))
+      settings.coreAttrs.whenEnabled(s => read(s.anchor, true)).toList.flatten,
+      settings.additionalAttrs.whenEnabled(s => read(s.anchor, true)).toList.flatten,
+      settings.cssClasses.whenEnabled(s => read(s.anchor, false)).toList.flatten,
+      settings.requestHeaders.whenEnabled(s => read(s.anchor, false)).toList.flatten,
+      settings.responseHeaders.whenEnabled(s => read(s.anchor, true)).toList.flatten,
+      settings.events.whenEnabled(s => read(s.anchor, false)).toList.flatten
     )
   }
 

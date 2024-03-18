@@ -3,13 +3,13 @@ package htmx4s.http4s.headers
 import org.http4s.headers.Location
 import org.http4s.Uri
 import org.typelevel.ci.CIString
-import htmx4s.scalatags.HtmxResponseHeaders
+import htmx4s.constants.HtmxResponseHeaders
 import org.http4s.Header
 
 final case class HxLocation(value: HxLocation.Value)
 
 object HxLocation:
-  val name: CIString = CIString(HtmxResponseHeaders.hxLocation.value)
+  val name: CIString = CIString(HtmxResponseHeaders.hxLocation)
 
   enum Value:
     case Path(uri: Uri)
