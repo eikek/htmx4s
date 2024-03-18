@@ -4,6 +4,7 @@ object Dependencies {
 
   object V {
     val scala3 = "3.3.3"
+    val htmx = "1.9.11"
     val http4s = "0.23.26"
     val http4sScalatags = "0.25.2"
     val munit = "0.7.29"
@@ -11,9 +12,16 @@ object Dependencies {
     val scalatags = "0.12.0"
   }
 
+  val htmx = Seq(
+    "org.webjars.npm" % "htmx.org" % V.htmx
+  )
+
   val http4s = Seq(
     "org.http4s" %% "http4s-core" % V.http4s,
     "org.http4s" %% "http4s-dsl" % V.http4s
+  )
+  val http4sEmber = Seq(
+    "org.http4s" %% "http4s-ember-server" % V.http4s
   )
 
   val scalatags = Seq("com.lihaoyi" %% "scalatags" % V.scalatags)

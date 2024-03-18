@@ -73,12 +73,14 @@ val buildInfoSettings = Seq(
 val constants = project
   .in(file("modules/constants"))
   .enablePlugins(HtmxSourceGeneratorPlugin)
+  .disablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(testSettings)
   .settings(scalafixSettings)
   .settings(
     name := "htmx4s-constants",
     description := "Provides htmx constant as scala values",
+    htmxRepositoryRef := s"v${V.htmx}",
     htmxGenerateSettings := HtmxSettings.default
       .modifyAll(_.withPackage("htmx4s.constants"))
   )
@@ -86,12 +88,14 @@ val constants = project
 val scalatags = project
   .in(file("modules/scalatags"))
   .enablePlugins(HtmxSourceGeneratorPlugin)
+  .disablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(testSettings)
   .settings(scalafixSettings)
   .settings(
     name := "htmx4s-scalatags",
     description := "Provides htmx tags to scalatags",
+    htmxRepositoryRef := s"v${V.htmx}",
     htmxGenerateSettings := HtmxSettings.default
       .modifyAll(_.disabled)
       .modifyAll(
@@ -110,6 +114,7 @@ val scalatags = project
 
 val http4s = project
   .in(file("modules/http4s"))
+  .disablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(testSettings)
   .settings(scalafixSettings)
@@ -123,12 +128,15 @@ val http4s = project
 
 val example = project
   .in(file("example"))
+  .enablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(scalafixSettings)
   .settings(noPublish)
   .settings(
     name := "htmx4s-example",
-    description := "Example using http4s with scalatags"
+    description := "Example using http4s with scalatags",
+    libraryDependencies ++= Dependencies.htmx ++
+      Dependencies.http4sEmber
   )
   .dependsOn(constants, scalatags, http4s)
 
