@@ -2,13 +2,12 @@ package htmx4s.http4s.util
 
 import cats.data.{Validated, ValidatedNel}
 import cats.syntax.all.*
-import cats.Applicative
+import cats.*
 
 opaque type ValidKM[K, M, A] = Validated[ValidationErrors[K, M], A]
 
-type Valid[A] = ValidKM[String, String, A]
-
 object ValidKM:
+
   def valid[K, M, A](a: A): ValidKM[K, M, A] = Validated.valid(a)
 
   def from[K, M, A](key: K, vm: ValidatedNel[M, A]): ValidKM[K, M, A] =
@@ -30,5 +29,3 @@ object ValidKM:
 
     private def selfAgain = self
     export selfAgain.{toValidatedNel => _, *}
-
-val Valid = ValidKM

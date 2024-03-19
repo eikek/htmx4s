@@ -4,7 +4,7 @@ import cats.effect.*
 import cats.data.ValidatedNel
 import cats.syntax.all.*
 
-import htmx4s.example.Valid
+import htmx4s.example.contacts.ContactError.*
 import htmx4s.example.contacts.Model.*
 import htmx4s.example.lib.ContactDb
 import htmx4s.example.lib.Model.*
@@ -33,13 +33,13 @@ final class Routes[F[_]: Async](db: ContactDb[F]) extends Htmx4sDsl[F] with Mode
       } yield resp
 
     case GET -> Root / "contacts" / "new" =>
-      Ok(Views.editContact(None))
+      Ok(Views.editContactPage(None))
 
     case req @ POST -> Root / "contacts" / "new" =>
       for {
-        vc <- req.as[Valid[Contact]]
-        _ <- vc.onSuccessIgnoreError(c => db.upsert(c).void)
-        resp <- SeeOther(Location(uri"/ui/contacts"))
+        vc <- req.as[ContactValid[Contact]]
+        _ <- vc.fold(_ => ().pure[F], c => db.upsert(c).void)
+        resp <- vc.fold(errs => ???, _ => SeeOther(Location(uri"/ui/contacts")))
       } yield resp
 
     case GET -> Root / "contacts" / LongVar(id) =>
@@ -62,7 +62,7 @@ final class Routes[F[_]: Async](db: ContactDb[F]) extends Htmx4sDsl[F] with Mode
 
     case req @ POST -> Root / "contacts" / LongVar(id) / "edit" =>
       for {
-        c <- req.as[Contact]
+        c <- req.as[ContactValid[Contact]]
         _ <- db.upsert(c.copy(id = id))
         resp <- SeeOther(Location(uri"/ui/contacts"))
       } yield resp

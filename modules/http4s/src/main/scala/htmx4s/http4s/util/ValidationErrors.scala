@@ -17,5 +17,8 @@ object ValidationErrors:
   def of[K, M](em: ErrorMessage[K, M], ems: ErrorMessage[K, M]*): ValidationErrors[K, M] =
     ValidationErrors(NonEmptyList(em, ems.toList))
 
+  def of[K, M](key: K, messages: NonEmptyList[M]): ValidationErrors[K, M] =
+    ValidationErrors.of(ErrorMessage(key, messages))
+
   given catsSemigroup[K, M]: Semigroup[ValidationErrors[K, M]] =
     Semigroup.instance((a, b) => ValidationErrors(a.errors.concatNel(b.errors)))

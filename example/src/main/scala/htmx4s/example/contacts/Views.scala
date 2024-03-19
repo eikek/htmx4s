@@ -141,8 +141,8 @@ object Views:
           tr(
             td(c.id),
             td(c.fullName),
-            td(c.phone.getOrElse("-")),
-            td(c.phone.getOrElse("-")),
+            td(c.phone.map(_.value).getOrElse("-")),
+            td(c.phone.map(_.value).getOrElse("-")),
             td(
               a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
               a(attr.href := s"/ui/contacts/${c.id}", "View")

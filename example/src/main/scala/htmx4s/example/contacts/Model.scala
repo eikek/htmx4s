@@ -9,8 +9,16 @@ object Model:
       query: Option[String]
   )
 
+  final case class ContactEditForm(
+    firstName: String,
+    lastName: String,
+    email: String,
+    phone: String
+  )
+
   final case class ContactEditPage(
-      contact: Option[Contact]
+    contact: Option[Contact],
+    validationErrors: ContactError.Errors
   )
 
   final case class ContactShowPage(
