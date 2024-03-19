@@ -1,10 +1,11 @@
 package htmx4s.http4s.headers
 
-import org.http4s.Uri
-import org.typelevel.ci.CIString
 import htmx4s.constants.HtmxRequestHeaders
+
 import org.http4s.Header
 import org.http4s.ParseResult
+import org.http4s.Uri
+import org.typelevel.ci.CIString
 
 final case class HxCurrentUrl(url: Uri)
 

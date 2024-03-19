@@ -6,8 +6,8 @@ import cats.effect.Sync
 
 import htmx4s.http4s.WebjarRoute.Webjar
 
-import org.http4s._
 import org.http4s.Uri.Path
+import org.http4s._
 
 final class WebjarRoute[F[_]: Sync](
     webjars: Seq[Webjar],

@@ -2,7 +2,8 @@ package htmx4s.example.lib
 
 import cats.effect.*
 import cats.syntax.all.*
-import Model.*
+
+import htmx4s.example.lib.Model._
 
 trait ContactDb[F[_]]:
   def search(query: Option[String]): F[List[Contact]]

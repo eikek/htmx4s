@@ -1,12 +1,14 @@
 package htmx4s.example
 
 import cats.effect.*
-import htmx4s.http4s.WebjarRoute
+
 import htmx4s.example.lib.ContactDb
-import org.http4s.server.Router
-import org.http4s.ember.server.EmberServerBuilder
+import htmx4s.http4s.WebjarRoute
+
 import com.comcast.ip4s.*
 import org.http4s.HttpRoutes
+import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.Router
 import org.http4s.server.middleware.Logger as Http4sLogger
 
 object Main extends IOApp:

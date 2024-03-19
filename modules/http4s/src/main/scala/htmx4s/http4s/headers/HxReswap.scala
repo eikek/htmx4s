@@ -1,9 +1,10 @@
 package htmx4s.http4s.headers
 
 import htmx4s.constants.*
-import org.typelevel.ci.CIString
+
 import org.http4s.Header
 import org.http4s.ParseFailure
+import org.typelevel.ci.CIString
 
 final case class HxReswap(value: SwapValue)
 

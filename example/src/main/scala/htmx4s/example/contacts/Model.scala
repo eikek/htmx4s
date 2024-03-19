@@ -5,14 +5,14 @@ import htmx4s.example.lib.Model.*
 object Model:
 
   final case class ContactListPage(
-    contacts: List[Contact],
-    query: Option[String]
+      contacts: List[Contact],
+      query: Option[String]
   )
 
   final case class ContactEditPage(
-    contact: Option[Contact]
+      contact: Option[Contact]
   )
 
   final case class ContactShowPage(
-    contact: Contact
+      contact: Contact
   )

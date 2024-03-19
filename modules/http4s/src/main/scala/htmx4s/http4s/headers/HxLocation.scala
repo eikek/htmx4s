@@ -1,10 +1,11 @@
 package htmx4s.http4s.headers
 
-import org.http4s.headers.Location
-import org.http4s.Uri
-import org.typelevel.ci.CIString
 import htmx4s.constants.HtmxResponseHeaders
+
 import org.http4s.Header
+import org.http4s.Uri
+import org.http4s.headers.Location
+import org.typelevel.ci.CIString
 
 final case class HxLocation(value: HxLocation.Value)
 
@@ -23,5 +24,5 @@ object HxLocation:
     Header.create(
       name,
       _.value.render,
-      s => Location.parse(s).map(l => HxLocation(Value.Path(l.uri))) //TODO
+      s => Location.parse(s).map(l => HxLocation(Value.Path(l.uri))) // TODO
     )

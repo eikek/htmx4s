@@ -1,9 +1,11 @@
 package htmx4s.example
 
 import cats.syntax.all.*
-import org.http4s.*
-import org.http4s.FormDataDecoder.*
+
 import htmx4s.example.lib.Model.*
+
+import org.http4s.FormDataDecoder.*
+import org.http4s.*
 
 trait LibModelDecoder:
   given QueryParamDecoder[Option[String]] =

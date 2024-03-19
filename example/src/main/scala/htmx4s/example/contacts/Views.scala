@@ -1,10 +1,11 @@
 package htmx4s.example.contacts
 
-import htmx4s.scalatags.Bundle.*
-import scalatags.Text.all.doctype
-import scalatags.Text.TypedTag
 import htmx4s.example.contacts.Model.*
 import htmx4s.example.lib.Model.*
+import htmx4s.scalatags.Bundle.*
+
+import scalatags.Text.TypedTag
+import scalatags.Text.all.doctype
 
 object Views:
 

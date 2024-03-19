@@ -1,9 +1,10 @@
 package htmx4s.http4s
 
 import cats.effect.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.FormDataDecoder
+
 import org.http4s.EntityDecoder
+import org.http4s.FormDataDecoder
+import org.http4s.dsl.Http4sDsl
 
 trait Htmx4sDsl[F[_]] extends Http4sDsl[F]:
 

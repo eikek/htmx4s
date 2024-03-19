@@ -40,7 +40,7 @@ object SwapModifier:
     lazy val bool = rest.trim.equalsIgnoreCase("true")
     lazy val duration = Try(Duration(rest.trim)).toEither.left.map(_.getMessage).flatMap {
       case fd: FiniteDuration => Right(fd)
-      case d => Left(s"Not a finite duration: $d")
+      case d                  => Left(s"Not a finite duration: $d")
     }
     lazy val pos = rest.trim.span(_ != ':') match {
       case (sel, pos) if pos.isEmpty =>
@@ -49,12 +49,12 @@ object SwapModifier:
         ScrollPosition.fromString(pos.drop(1)).map(p => (p, Some(sel)))
     }
     name.toLowerCase match {
-      case "transition" => Right(Transition)
-      case "swap"       => duration.map(Swap.apply)
-      case "settle"     => duration.map(Settle.apply)
-      case "ignoretitle" => Right(IgnoreTitle)
-      case "show" => pos.map(t => Show(t._1, t._2))
-      case "scroll" => pos.map(t => Scroll(t._1, t._2))
+      case "transition"   => Right(Transition)
+      case "swap"         => duration.map(Swap.apply)
+      case "settle"       => duration.map(Settle.apply)
+      case "ignoretitle"  => Right(IgnoreTitle)
+      case "show"         => pos.map(t => Show(t._1, t._2))
+      case "scroll"       => pos.map(t => Scroll(t._1, t._2))
       case "focus-scroll" => Right(FocusScroll(bool))
-      case _ => Left(s"Invalid swap modifier name: $name")
+      case _              => Left(s"Invalid swap modifier name: $name")
     }
