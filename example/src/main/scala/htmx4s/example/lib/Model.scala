@@ -1,7 +1,6 @@
-package htmx4s.example
+package htmx4s.example.lib
 
 object Model:
-
   final case class Name(first: String, last: String):
     val fullName = s"$first $last"
     def contains(s: String): Boolean =

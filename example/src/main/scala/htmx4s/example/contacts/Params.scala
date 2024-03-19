@@ -1,4 +1,4 @@
-package htmx4s.example
+package htmx4s.example.contacts
 
 import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
 

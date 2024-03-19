@@ -1,6 +1,13 @@
 import Dependencies.V
 import com.github.sbt.git.SbtGit.GitKeys._
 
+addCommandAlias("ci", "make; lint; test")
+addCommandAlias(
+  "lint",
+  "scalafmtSbtCheck; scalafmtCheckAll; Compile/scalafix --check; Test/scalafix --check"
+)
+addCommandAlias("fix", "Compile/scalafix; Test/scalafix; scalafmtSbt; scalafmtAll")
+
 val sharedSettings = Seq(
   organization := "com.github.eikek",
   scalaVersion := V.scala3,

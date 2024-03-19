@@ -1,8 +1,10 @@
-package htmx4s.example
+package htmx4s.example.contacts
 
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.all.doctype
-import scalatags.Text.{TypedTag}
+import scalatags.Text.TypedTag
+import htmx4s.example.contacts.Model.*
+import htmx4s.example.lib.Model.*
 
 object Views:
 
@@ -31,7 +33,7 @@ object Views:
 
   def notFoundPage = layout("Not Found")(notFound)
 
-  def showContact(c: Model.Contact) =
+  def showContact(c: Contact) =
     div(
       h1(c.fullName),
       div(
@@ -44,9 +46,10 @@ object Views:
       )
     )
 
-  def showContactPage(c: Model.Contact) = layout(c.fullName)(showContact(c))
+  def showContactPage(m: ContactShowPage) =
+    layout(m.contact.fullName)(showContact(m.contact))
 
-  def editContact(c: Option[Model.Contact]) =
+  def editContact(c: Option[Contact]) =
     div(
       form(
         attr.action := c.fold("/ui/contacts/new")(c => s"/ui/contacts/${c.id}/edit"),
@@ -103,50 +106,47 @@ object Views:
       p(a(attr.href := "/ui/contacts", "Back"))
     )
 
-  def editContactPage(c: Option[Model.Contact]) =
-    layout(s"Edit ${c.map(_.fullName).getOrElse("")}")(editContact(c))
+  def editContactPage(m: ContactEditPage) =
+    val title = m.contact.map(_.fullName).map(n => s"Edit $n").getOrElse("Create New")
+    layout(title)(editContact(m.contact))
 
-  def contactListPage(
-      contacts: List[Model.Contact],
-      query: Option[String]
-  ): doctype =
-    layout("Contact Search")(contactList(contacts, query))
-
-  def contactList(
-      contacts: List[Model.Contact],
-      query: Option[String]
-  ): TypedTag[String] =
-    div(
-      form(
-        attr.action := "/ui/contacts",
-        attr.method := "GET",
-        label(attr.`for` := "search", "Search Term"),
-        input(
-          attr.id := "search",
-          attr.`type` := "search",
-          attr.name := "q",
-          attr.value := query.getOrElse("")
+  def contactListPage(m: ContactListPage): doctype =
+    layout("Contact Search")(
+      div(
+        form(
+          attr.action := "/ui/contacts",
+          attr.method := "GET",
+          label(attr.`for` := "search", "Search Term"),
+          input(
+            attr.id := "search",
+            attr.`type` := "search",
+            attr.name := "q",
+            attr.value := m.query.getOrElse("")
+          ),
+          input(attr.`type` := "submit", attr.value := "Search")
         ),
-        input(attr.`type` := "submit", attr.value := "Search")
+        contactTable(m.contacts),
+        p(a(attr.href := "/ui/contacts/new", "Add Contact"))
+      )
+    )
+
+  def contactTable(contacts: List[Contact]) =
+    table(
+      thead(
+        tr(th("Id"), th("Name"), th("E-Mail"), th("Phone"), th(""))
       ),
-      table(
-        thead(
-          tr(th("Id"), th("Name"), th("E-Mail"), th("Phone"), th(""))
-        ),
-        tbody(
-          contacts.map(c =>
-            tr(
-              td(c.id),
-              td(c.fullName),
-              td(c.phone.getOrElse("-")),
-              td(c.phone.getOrElse("-")),
-              td(
-                a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-                a(attr.href := s"/ui/contacts/${c.id}", "View")
-              )
+      tbody(
+        contacts.map(c =>
+          tr(
+            td(c.id),
+            td(c.fullName),
+            td(c.phone.getOrElse("-")),
+            td(c.phone.getOrElse("-")),
+            td(
+              a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+              a(attr.href := s"/ui/contacts/${c.id}", "View")
             )
           )
         )
-      ),
-      p(a(attr.href := "/ui/contacts/new", "Add Contact"))
+      )
     )
