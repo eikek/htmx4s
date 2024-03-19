@@ -38,8 +38,8 @@ object Views:
     div(
       h1(c.fullName),
       div(
-        div("Phone:", c.phone.getOrElse("-")),
-        div("Email:", c.email.getOrElse("-"))
+        div("Phone:", c.phone.map(_.value).getOrElse("-")),
+        div("Email:", c.email.map(_.value).getOrElse("-"))
       ),
       p(
         a(attr.href := "/ui/contacts/${c.id}/edit", "Edit"),
@@ -64,7 +64,7 @@ object Views:
               attr.id := "email",
               attr.`type` := "email",
               attr.placeholder := "Email",
-              attr.value := c.flatMap(_.email).getOrElse("")
+              attr.value := c.flatMap(_.email.map(_.value)).getOrElse("")
             ),
             span(attr.`class` := "error", "")
           ),
@@ -97,7 +97,7 @@ object Views:
               attr.id := "phone",
               attr.`type` := "phone",
               attr.placeholder := "Phone",
-              attr.value := c.flatMap(_.phone).getOrElse("")
+              attr.value := c.flatMap(_.phone.map(_.value)).getOrElse("")
             ),
             span(attr.`class` := "error", "")
           ),
