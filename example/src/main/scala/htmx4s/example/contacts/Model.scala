@@ -1,6 +1,13 @@
 package htmx4s.example.contacts
 
+import cats.syntax.all.*
 import htmx4s.example.lib.Model.*
+import htmx4s.example.contacts.ContactError.*
+import org.http4s.FormDataDecoder
+import org.http4s.FormDataDecoder.*
+import cats.data.Validated
+import htmx4s.http4s.util.ValidationErrors
+import htmx4s.http4s.util.ValidationDsl.*
 
 object Model:
 
@@ -10,16 +17,53 @@ object Model:
   )
 
   final case class ContactEditForm(
-    firstName: String,
-    lastName: String,
-    email: String,
-    phone: String
-  )
+      firstName: String,
+      lastName: String,
+      email: String,
+      phone: String
+  ):
+    def toContact(id: Long): ContactValid[Contact] =
+      val fn = firstName.asNonEmpty(Key.firstName, "first name is required")
+      val ln = lastName.asNonEmpty(Key.lastName, "last name is required")
+      val name = (fn, ln).mapN((a, b) => Name.create(a, b).keyed(Key.name)).andThen(identity)
+      val em = email.emptyOption.traverse(Email(_).keyed(Key.email))
+      val ph = phone.emptyOption.traverse(PhoneNumber(_).keyed(Key.phone))
+      val vid = id.valid[Key, String]
+      (vid, name, ph, em).mapN(Contact.apply)
+
+  object ContactEditForm:
+    given FormDataDecoder[ContactEditForm] =
+      (
+        field[String]("firstName"),
+        field[String]("lastName"),
+        field[String]("email"),
+        field[String]("phone")
+      ).mapN(ContactEditForm.apply)
+
+    val empty: ContactEditForm = ContactEditForm("", "", "", "")
+
+    def from(c: Contact): ContactEditForm =
+      ContactEditForm(
+        c.name.first,
+        c.name.last,
+        c.email.map(_.value).getOrElse(""),
+        c.phone.map(_.value).getOrElse("")
+      )
 
   final case class ContactEditPage(
-    contact: Option[Contact],
-    validationErrors: ContactError.Errors
-  )
+      id: Option[Long],
+      form: ContactEditForm,
+      validationErrors: Option[ContactError.Errors]
+  ):
+    def fullName: Option[String] =
+      for {
+        _ <- id
+        fn <- Option(form.firstName).filter(_.nonEmpty)
+        ln <- Option(form.lastName).filter(_.nonEmpty)
+      } yield s"$fn $ln"
+
+  object ContactEditPage:
+    val empty: ContactEditPage = ContactEditPage(None, ContactEditForm.empty, None)
 
   final case class ContactShowPage(
       contact: Contact

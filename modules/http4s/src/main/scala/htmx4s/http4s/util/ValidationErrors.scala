@@ -6,6 +6,9 @@ import cats.Semigroup
 final case class ValidationErrors[K, M](
     errors: NonEmptyList[ErrorMessage[K, M]]
 ):
+  def map[MM](f: M => MM): ValidationErrors[K, MM] =
+    ValidationErrors(errors.map(_.map(f)))
+
   def find(key: K): Option[NonEmptyList[M]] =
     NonEmptyList
       .fromList(errors.filter(_.key == key).map(_.messages))
@@ -19,6 +22,9 @@ object ValidationErrors:
 
   def of[K, M](key: K, messages: NonEmptyList[M]): ValidationErrors[K, M] =
     ValidationErrors.of(ErrorMessage(key, messages))
+
+  def one[K, M](key: K, message: M): ValidationErrors[K, M] =
+    ValidationErrors.of(ErrorMessage(key, NonEmptyList.one(message)))
 
   given catsSemigroup[K, M]: Semigroup[ValidationErrors[K, M]] =
     Semigroup.instance((a, b) => ValidationErrors(a.errors.concatNel(b.errors)))

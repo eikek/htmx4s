@@ -7,7 +7,7 @@ import htmx4s.example.lib.Model._
 
 trait ContactDb[F[_]]:
   def search(query: Option[String]): F[List[Contact]]
-  def delete(id: Long): F[Unit]
+  def delete(id: Long): F[Boolean]
   def upsert(contact: Contact): F[Long]
   def findById(id: Long): F[Option[Contact]]
 
@@ -21,8 +21,8 @@ object ContactDb:
           val q = query.map(_.toLowerCase)
           data.get.map(_.values.filter(c => q.exists(c.contains)).toList.sortBy(_.name))
 
-        def delete(id: Long): F[Unit] =
-          data.update(_.removed(id)).void
+        def delete(id: Long): F[Boolean] =
+          data.modify(m => (m.removed(id), m.contains(id)))
 
         def upsert(contact: Contact): F[Long] =
           val id =

@@ -14,7 +14,7 @@ object Views:
       html(
         head(
           title(attr.name := s"Contact- $titleStr"),
-          script(attr.src := "/js/htmx/htmx.min.js")
+          script(attr.src := "/js/htmx/htmx.min.js", attr.crossorigin := "anonymous")
         ),
         body(
           attr.hxBoost := true,
@@ -26,9 +26,10 @@ object Views:
 
   def notFound =
     div(
-      h1("Resource not found!"),
+      h2("Resource not found!"),
+      p("Sorry, this doesn't exist."),
       p(
-        a(attr.href := "/ui/contacts", "Back")
+        a(attr.href := "/ui/contacts", "Home")
       )
     )
 
@@ -42,7 +43,7 @@ object Views:
         div("Email:", c.email.map(_.value).getOrElse("-"))
       ),
       p(
-        a(attr.href := "/ui/contacts/${c.id}/edit", "Edit"),
+        a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
         a(attr.href := "/ui/contacts", "Back")
       )
     )
@@ -50,10 +51,21 @@ object Views:
   def showContactPage(m: ContactShowPage) =
     layout(m.contact.fullName)(showContact(m.contact))
 
-  def editContact(c: Option[Contact]) =
+
+  def errorList(errors:Option[ContactError.Errors], key: ContactError.Key) =
+    errors.flatMap(_.find(key)).map { errs =>
+      ul(attr.`class` := "error-list", errs.toList.map(m => li(m)))
+    }
+
+
+  def editContact(
+      c: ContactEditForm,
+      id: Option[Long],
+      formErrors: Option[ContactError.Errors]
+  ) =
     div(
       form(
-        attr.action := c.fold("/ui/contacts/new")(c => s"/ui/contacts/${c.id}/edit"),
+        attr.action := id.fold("/ui/contacts/new")(n => s"/ui/contacts/$n/edit"),
         attr.method := "POST",
         fieldset(
           legend("Contact Values"),
@@ -64,31 +76,31 @@ object Views:
               attr.id := "email",
               attr.`type` := "email",
               attr.placeholder := "Email",
-              attr.value := c.flatMap(_.email.map(_.value)).getOrElse("")
+              attr.value := c.email
             ),
-            span(attr.`class` := "error", "")
+            errorList(formErrors, ContactError.Key.email)
           ),
           p(
             label(attr.`for` := "name.first", "First Name"),
             input(
-              attr.name := "name.first",
+              attr.name := "firstName",
               attr.id := "name.first",
               attr.`type` := "text",
               attr.placeholder := "First Name",
-              attr.value := c.map(_.name.first).getOrElse("")
+              attr.value := c.firstName
             ),
-            span(attr.`class` := "error", "")
+            errorList(formErrors, ContactError.Key.firstName)
           ),
           p(
             label(attr.`for` := "name.last", "Last Name"),
             input(
-              attr.name := "name.last",
+              attr.name := "lastName",
               attr.id := "name.last",
               attr.`type` := "text",
               attr.placeholder := "Last Name",
-              attr.value := c.map(_.name.last).getOrElse("")
+              attr.value := c.lastName
             ),
-            span(attr.`class` := "error", "")
+            errorList(formErrors, ContactError.Key.lastName)
           ),
           p(
             label(attr.`for` := "phone", "Phone"),
@@ -97,19 +109,32 @@ object Views:
               attr.id := "phone",
               attr.`type` := "phone",
               attr.placeholder := "Phone",
-              attr.value := c.flatMap(_.phone.map(_.value)).getOrElse("")
+              attr.value := c.phone
             ),
-            span(attr.`class` := "error", "")
+            errorList(formErrors, ContactError.Key.phone)
           ),
           button("Save")
         )
       ),
+      errorList(formErrors, ContactError.Key.default),
+      id.map { n =>
+        form(
+          attr.action := s"/ui/contacts/$n/delete",
+          attr.method := "POST",
+          button("Delete Contact")
+        )
+      },
       p(a(attr.href := "/ui/contacts", "Back"))
     )
 
   def editContactPage(m: ContactEditPage) =
-    val title = m.contact.map(_.fullName).map(n => s"Edit $n").getOrElse("Create New")
-    layout(title)(editContact(m.contact))
+    val title = m.fullName.map(n => s"Edit $n").getOrElse("Create New")
+    layout(title)(
+      div(
+        editContact(m.form, m.id, m.validationErrors),
+        m.validationErrors.map(_ => p("There are form errors"))
+      )
+    )
 
   def contactListPage(m: ContactListPage): doctype =
     layout("Contact Search")(
@@ -141,7 +166,7 @@ object Views:
           tr(
             td(c.id),
             td(c.fullName),
-            td(c.phone.map(_.value).getOrElse("-")),
+            td(c.email.map(_.value).getOrElse("-")),
             td(c.phone.map(_.value).getOrElse("-")),
             td(
               a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
