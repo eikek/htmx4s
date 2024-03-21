@@ -55,6 +55,7 @@ final class WebjarRoute[F[_]: Sync](
 
 object WebjarRoute:
   def forHtmx[F[_]: Sync] = WebjarRoute[F](Seq(Webjar.htmx1911))
+  def withHtmx[F[_]: Sync](more: Webjar*) = WebjarRoute[F](Webjar.htmx1911 +: more)
 
   /** Webjar info required to serve its files. The webjar is expected to be available from
     * the current class loader.
@@ -74,7 +75,7 @@ object WebjarRoute:
       version: String,
       path: List[String]
   ):
-    private[http4s] val basePath = Vector(name, version) ++ path
+    private[http4s] val basePath = (Vector(name, version) ++ path).filter(_.nonEmpty)
 
   object Webjar:
     def apply(segment: String)(name: String, version: String, path: String*): Webjar =

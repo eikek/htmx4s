@@ -13,21 +13,23 @@ object Model:
 
   final case class ContactListPage(
       contacts: List[Contact],
-      query: Option[String]
+      query: Option[String],
+      page: Int
   )
 
   final case class ContactEditForm(
       firstName: String,
       lastName: String,
-      email: String,
-      phone: String
+      email: Option[String],
+      phone: Option[String]
   ):
     def toContact(id: Long): ContactValid[Contact] =
       val fn = firstName.asNonEmpty(Key.firstName, "first name is required")
       val ln = lastName.asNonEmpty(Key.lastName, "last name is required")
-      val name = (fn, ln).mapN((a, b) => Name.create(a, b).keyed(Key.name)).andThen(identity)
-      val em = email.emptyOption.traverse(Email(_).keyed(Key.email))
-      val ph = phone.emptyOption.traverse(PhoneNumber(_).keyed(Key.phone))
+      val name =
+        (fn, ln).mapN((a, b) => Name.create(a, b).keyed(Key.name)).andThen(identity)
+      val em = email.traverse(Email(_).keyed(Key.email))
+      val ph = phone.traverse(PhoneNumber(_).keyed(Key.phone))
       val vid = id.valid[Key, String]
       (vid, name, ph, em).mapN(Contact.apply)
 
@@ -36,18 +38,18 @@ object Model:
       (
         field[String]("firstName"),
         field[String]("lastName"),
-        field[String]("email"),
-        field[String]("phone")
+        fieldOptional[String]("email"),
+        fieldOptional[String]("phone")
       ).mapN(ContactEditForm.apply)
 
-    val empty: ContactEditForm = ContactEditForm("", "", "", "")
+    val empty: ContactEditForm = ContactEditForm("", "", None, None)
 
     def from(c: Contact): ContactEditForm =
       ContactEditForm(
         c.name.first,
         c.name.last,
-        c.email.map(_.value).getOrElse(""),
-        c.phone.map(_.value).getOrElse("")
+        c.email.map(_.value),
+        c.phone.map(_.value)
       )
 
   final case class ContactEditPage(

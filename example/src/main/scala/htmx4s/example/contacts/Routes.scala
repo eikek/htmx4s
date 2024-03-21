@@ -3,32 +3,66 @@ package htmx4s.example.contacts
 import cats.effect.*
 import cats.syntax.all.*
 
+import htmx4s.example.contacts.Model.ContactEditForm
 import htmx4s.example.contacts.Model.*
+import htmx4s.example.contacts.Views.notFoundPage
 import htmx4s.example.lib.ContactDb
+import htmx4s.example.lib.ContactDb.UpdateResult
 import htmx4s.example.lib.Model.*
 import htmx4s.http4s.Htmx4sDsl
+import htmx4s.http4s.util.ValidationDsl.*
+import htmx4s.http4s.util.ValidationErrors
 
-import org.http4s.CacheDirective
 import org.http4s.HttpRoutes
 import org.http4s.headers.Location
-import org.http4s.headers.`Cache-Control`
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
-import htmx4s.example.contacts.Model.ContactEditForm
-import htmx4s.example.contacts.Views.notFoundPage
 
 // TODO:
 // - accept / content-type negotiation
 // - derive formdecoder
 
 final class Routes[F[_]: Async](db: ContactDb[F]) extends Htmx4sDsl[F]:
+  val emailExistsError = ValidationErrors
+    .one(ContactError.Key.email, s"Email already exists!")
+    .invalid
+
+  def upsert(
+      form: ContactEditForm,
+      id: Option[Long]
+  ): F[ContactError.ContactValid[Long]] =
+    form
+      .toContact(id.getOrElse(-1L))
+      .fold(
+        _.invalid.pure[F],
+        c =>
+          db.upsert(c).map {
+            case UpdateResult.Success(id)    => id.valid
+            case UpdateResult.EmailDuplicate => emailExistsError
+          }
+      )
+
+  def checkMail(emailStr: String): F[ContactError.ContactValid[Email]] =
+    Email(emailStr)
+      .keyed(ContactError.Key.email)
+      .fold(
+        _.invalid.pure[F],
+        email =>
+          db.findByEmail(email).map {
+            case Some(_) => emailExistsError
+            case None    => email.valid
+          }
+      )
 
   def routes: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root / "contacts" :? Params.Query(q) =>
+    case GET -> Root / "contacts" :? Params.Query(q) +& Params.Page(p) =>
       for {
-        result <- db.search(q)
-        view = Views.contactListPage(ContactListPage(result, q))
-        resp <- Ok(view, `Cache-Control`(CacheDirective.`no-cache`()))
+        result <- db.search(q, p)
+        _ <- Async[F].blocking(println(s"result: $result"))
+        view = Views.contactListPage(
+          ContactListPage(result, q.filter(_.nonEmpty), p.getOrElse(1))
+        )
+        resp <- Ok(view)
       } yield resp
 
     case GET -> Root / "contacts" / "new" =>
@@ -37,9 +71,8 @@ final class Routes[F[_]: Async](db: ContactDb[F]) extends Htmx4sDsl[F]:
     case req @ POST -> Root / "contacts" / "new" =>
       for {
         formInput <- req.as[ContactEditForm]
-        contact = formInput.toContact(-1L)
-        _ <- contact.fold(_ => ().pure[F], c => db.upsert(c).void)
-        resp <- contact.fold(
+        result <- upsert(formInput, None)
+        resp <- result.fold(
           errs => Ok(Views.editContactPage(ContactEditPage(None, formInput, errs.some))),
           _ => SeeOther(Location(uri"/ui/contacts"))
         )
@@ -67,20 +100,28 @@ final class Routes[F[_]: Async](db: ContactDb[F]) extends Htmx4sDsl[F]:
     case req @ POST -> Root / "contacts" / LongVar(id) / "edit" =>
       for {
         formInput <- req.as[ContactEditForm]
-        contact = formInput.toContact(id)
-        _ <- contact.fold(_ => ().pure[F], c => db.upsert(c.copy(id = id)).void)
-        resp <- contact.fold(
+        result <- upsert(formInput, id.some)
+        resp <- result.fold(
           errs =>
             Ok(Views.editContactPage(ContactEditPage(id.some, formInput, errs.some))),
           _ => SeeOther(Location(uri"/ui/contacts"))
         )
       } yield resp
 
-    case POST -> Root / "contacts" / LongVar(id) / "delete" =>
+    case DELETE -> Root / "contacts" / LongVar(id) =>
       for {
         found <- db.delete(id)
         resp <-
           if (found) SeeOther(Location(uri"/ui/contacts"))
           else NotFound(notFoundPage)
+      } yield resp
+
+    case GET -> Root / "contacts" / "email-check" :? Params.Email(emailStr) =>
+      for {
+        result <- checkMail(emailStr)
+        resp <- result.fold(
+          errs => Ok(Views.errorList(errs.some, ContactError.Key.email)),
+          _ => Ok(Views.errorList(Nil))
+        )
       } yield resp
   }

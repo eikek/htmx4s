@@ -1,5 +1,7 @@
 package htmx4s.example.contacts
 
+import cats.syntax.all.*
+
 import htmx4s.example.contacts.Model.*
 import htmx4s.example.lib.Model.*
 import htmx4s.scalatags.Bundle.*
@@ -8,17 +10,25 @@ import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
 
 object Views:
+  val cls = attr.`class`
+  val linkStyle = "text-blue-500 hover:text-blue-600 cursor-pointer"
+  val btnStyle = "px-2 py-1 rounded border border-blue-500 bg-blue-200 bg-opacity-50 text-blue-800 cursor-pointer hover:bg-opacity-75"
 
   def layout(titleStr: String)(content: TypedTag[String]) =
     doctype("html")(
       html(
         head(
           title(attr.name := s"Contact- $titleStr"),
-          script(attr.src := "/js/htmx/htmx.min.js", attr.crossorigin := "anonymous")
+          meta(attr.charset := "UTF-8"),
+          meta(attr.name := "mobile-web-app-capable", attr.content := "yes"),
+          meta(attr.name := "viewport", attr.content := "width=device-width, initial-scale=1, user-scalable=yes"),
+          script(attr.src := "/assets/htmx/htmx.min.js", attr.crossorigin := "anonymous"),
+          link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet")
         ),
         body(
+          cls := "container mx-auto",
           attr.hxBoost := true,
-          h1("Htmx+Scala Contact App"),
+          h1(cls := "text-3xl font-bold my-4","Htmx+Scala Contact App"),
           content
         )
       )
@@ -26,10 +36,10 @@ object Views:
 
   def notFound =
     div(
-      h2("Resource not found!"),
+      h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
       p("Sorry, this doesn't exist."),
       p(
-        a(attr.href := "/ui/contacts", "Home")
+        a(cls := linkStyle, attr.href := "/ui/contacts", "Home")
       )
     )
 
@@ -43,20 +53,23 @@ object Views:
         div("Email:", c.email.map(_.value).getOrElse("-"))
       ),
       p(
-        a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-        a(attr.href := "/ui/contacts", "Back")
+        a(cls := linkStyle, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+        a(cls := linkStyle, attr.href := "/ui/contacts", "Back")
       )
     )
 
   def showContactPage(m: ContactShowPage) =
     layout(m.contact.fullName)(showContact(m.contact))
 
+  def errorList(errors: List[String]): TypedTag[String] =
+    val hidden = if (errors.isEmpty) "hidden" else ""
+    ul(attr.`class` := s"error-list $hidden", errors.map(m => li(m)))
 
-  def errorList(errors:Option[ContactError.Errors], key: ContactError.Key) =
-    errors.flatMap(_.find(key)).map { errs =>
-      ul(attr.`class` := "error-list", errs.toList.map(m => li(m)))
-    }
-
+  def errorList(
+      errors: Option[ContactError.Errors],
+      key: ContactError.Key
+  ): TypedTag[String] =
+    errorList(errors.flatMap(_.find(key)).map(_.toList).getOrElse(Nil))
 
   def editContact(
       c: ContactEditForm,
@@ -69,14 +82,18 @@ object Views:
         attr.method := "POST",
         fieldset(
           legend("Contact Values"),
-          p(
+          div(
             label(attr.`for` := "email", "Email"),
             input(
               attr.name := "email",
               attr.id := "email",
               attr.`type` := "email",
               attr.placeholder := "Email",
-              attr.value := c.email
+              attr.value := c.email.orEmpty,
+              attr.hxGet := "/ui/contacts/email-check",
+              attr.hxTarget := "next .error-list",
+              attr.hxSwap := "outerHTML",
+              attr.hxTrigger := "change, keyup delay:200ms changed"
             ),
             errorList(formErrors, ContactError.Key.email)
           ),
@@ -109,22 +126,25 @@ object Views:
               attr.id := "phone",
               attr.`type` := "phone",
               attr.placeholder := "Phone",
-              attr.value := c.phone
+              attr.value := c.phone.orEmpty
             ),
             errorList(formErrors, ContactError.Key.phone)
           ),
-          button("Save")
+          button(cls := btnStyle, "Save")
         )
       ),
       errorList(formErrors, ContactError.Key.default),
       id.map { n =>
-        form(
-          attr.action := s"/ui/contacts/$n/delete",
-          attr.method := "POST",
-          button("Delete Contact")
+        button(
+          cls := btnStyle,
+          attr.hxDelete := s"/ui/contacts/$n",
+          attr.hxTarget := "body",
+          attr.hxPushUrl := true,
+          attr.hxConfirm := "Are you sure you want to delete this contact?",
+          "Delete Contact"
         )
       },
-      p(a(attr.href := "/ui/contacts", "Back"))
+      p(a(cls := linkStyle, attr.href := "/ui/contacts", "Back"))
     )
 
   def editContactPage(m: ContactEditPage) =
@@ -151,12 +171,12 @@ object Views:
           ),
           input(attr.`type` := "submit", attr.value := "Search")
         ),
-        contactTable(m.contacts),
-        p(a(attr.href := "/ui/contacts/new", "Add Contact"))
+        contactTable(m.contacts, m.page),
+        p(a(cls := linkStyle, attr.href := "/ui/contacts/new", "Add Contact"))
       )
     )
 
-  def contactTable(contacts: List[Contact]) =
+  def contactTable(contacts: List[Contact], page: Int) =
     table(
       thead(
         tr(th("Id"), th("Name"), th("E-Mail"), th("Phone"), th(""))
@@ -169,10 +189,25 @@ object Views:
             td(c.email.map(_.value).getOrElse("-")),
             td(c.phone.map(_.value).getOrElse("-")),
             td(
-              a(attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-              a(attr.href := s"/ui/contacts/${c.id}", "View")
+              a(cls := linkStyle, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+              a(cls := linkStyle, attr.href := s"/ui/contacts/${c.id}", "View")
             )
           )
-        )
+        ),
+        Option(contacts.size).filter(_ >= 10).map { _ =>
+          tr(
+            td(
+              attr.colspan := 5,
+              button(
+                cls := btnStyle,
+                attr.hxTarget := "closest tr",
+                attr.hxSwap := "outerHTML",
+                attr.hxSelect := "tbody > tr",
+                attr.hxGet := s"/ui/contacts?page=${page + 1}",
+                "Load More"
+              )
+            )
+          )
+        }
       )
     )
