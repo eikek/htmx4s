@@ -9,3 +9,5 @@ object Bundle extends Text.Cap with text.Tags with text.Tags2 with Text.Aggregat
       extends Text.Cap
       with Text.Attrs
       with HtmxAttributes[text.Builder, String, String]
+
+  val cls = attr.`class`

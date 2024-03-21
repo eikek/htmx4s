@@ -10,7 +10,6 @@ import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
 
 object Views:
-  val cls = attr.`class`
   val linkStyle = "text-blue-500 hover:text-blue-600 cursor-pointer"
   val btnStyle = "px-2 py-1 rounded border border-blue-500 bg-blue-200 bg-opacity-50 text-blue-800 cursor-pointer hover:bg-opacity-75"
   val inputStyle = "border rounded ml-2 my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
@@ -169,14 +168,15 @@ object Views:
         form(
           attr.action := "/ui/contacts",
           attr.method := "GET",
-          label(attr.`for` := "search", "Search Term"),
+          label(cls := "mr-2", attr.`for` := "search", "Search"),
           input(
+            cls := inputStyle,
             attr.id := "search",
             attr.`type` := "search",
             attr.name := "q",
             attr.value := m.query.getOrElse("")
           ),
-          input(attr.`type` := "submit", attr.value := "Search")
+          button(cls := btnStyle, attr.`type` := "submit", "Search")
         ),
         contactTable(m.contacts, m.page),
         p(a(cls := linkStyle, attr.href := "/ui/contacts/new", "Add Contact"))
