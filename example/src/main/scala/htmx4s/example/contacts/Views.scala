@@ -13,10 +13,12 @@ object Views:
   val cls = attr.`class`
   val linkStyle = "text-blue-500 hover:text-blue-600 cursor-pointer"
   val btnStyle = "px-2 py-1 rounded border border-blue-500 bg-blue-200 bg-opacity-50 text-blue-800 cursor-pointer hover:bg-opacity-75"
+  val inputStyle = "border rounded ml-2 my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
 
   def layout(titleStr: String)(content: TypedTag[String]) =
     doctype("html")(
       html(
+        cls := "dark",
         head(
           title(attr.name := s"Contact- $titleStr"),
           meta(attr.charset := "UTF-8"),
@@ -26,7 +28,7 @@ object Views:
           link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet")
         ),
         body(
-          cls := "container mx-auto",
+          cls := "container mx-auto mx-2 bg-white text-gray-900 dark:bg-slate-800 dark:text-slate-100",
           attr.hxBoost := true,
           h1(cls := "text-3xl font-bold my-4","Htmx+Scala Contact App"),
           content
@@ -83,8 +85,10 @@ object Views:
         fieldset(
           legend("Contact Values"),
           div(
-            label(attr.`for` := "email", "Email"),
+            cls := "flex flex-col w-1/2",
+            label(attr.`for` := "email", cls := "font-semibold text-md", "Email"),
             input(
+              cls := inputStyle,
               attr.name := "email",
               attr.id := "email",
               attr.`type` := "email",
@@ -100,6 +104,7 @@ object Views:
           p(
             label(attr.`for` := "name.first", "First Name"),
             input(
+              cls := inputStyle,
               attr.name := "firstName",
               attr.id := "name.first",
               attr.`type` := "text",
@@ -111,6 +116,7 @@ object Views:
           p(
             label(attr.`for` := "name.last", "Last Name"),
             input(
+              cls := inputStyle,
               attr.name := "lastName",
               attr.id := "name.last",
               attr.`type` := "text",
@@ -122,6 +128,7 @@ object Views:
           p(
             label(attr.`for` := "phone", "Phone"),
             input(
+              cls := inputStyle,
               attr.name := "phone",
               attr.id := "phone",
               attr.`type` := "phone",
@@ -136,7 +143,7 @@ object Views:
       errorList(formErrors, ContactError.Key.default),
       id.map { n =>
         button(
-          cls := btnStyle,
+          cls := btnStyle + " mx-3",
           attr.hxDelete := s"/ui/contacts/$n",
           attr.hxTarget := "body",
           attr.hxPushUrl := true,
@@ -144,7 +151,7 @@ object Views:
           "Delete Contact"
         )
       },
-      p(a(cls := linkStyle, attr.href := "/ui/contacts", "Back"))
+      p(cls := "mx-3", a(cls := linkStyle, attr.href := "/ui/contacts", "Back"))
     )
 
   def editContactPage(m: ContactEditPage) =
@@ -178,12 +185,14 @@ object Views:
 
   def contactTable(contacts: List[Contact], page: Int) =
     table(
+      cls := "w-full table-auto",
       thead(
         tr(th("Id"), th("Name"), th("E-Mail"), th("Phone"), th(""))
       ),
       tbody(
         contacts.map(c =>
           tr(
+            cls := "my-1 px-2",
             td(c.id),
             td(c.fullName),
             td(c.email.map(_.value).getOrElse("-")),
@@ -196,6 +205,7 @@ object Views:
         ),
         Option(contacts.size).filter(_ >= 10).map { _ =>
           tr(
+            cls := "my-1 px-2",
             td(
               attr.colspan := 5,
               button(

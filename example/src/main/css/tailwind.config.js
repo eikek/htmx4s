@@ -3,7 +3,7 @@
 const colors = require('tailwindcss/colors')
 
 module.exports = {
-    darkMode: 'class', // or 'media' or 'class'
+    darkMode: 'media',
     content: [ "example/src/main/scala/htmx4s/example/contacts/Views.scala",
                "example/src/main/css/keep.txt",
              ],

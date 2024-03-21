@@ -1,5 +1,7 @@
 package htmx4s.example
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 
 import htmx4s.example.lib.ContactDb
@@ -30,6 +32,7 @@ object Main extends IOApp:
           .withHttpApp(
             Http4sLogger.httpApp(true, true)(routes.orNotFound)
           )
+          .withShutdownTimeout(500.millis)
           .build
-          .useForever
+          .use(_ => IO.never)
     } yield ExitCode.Success
