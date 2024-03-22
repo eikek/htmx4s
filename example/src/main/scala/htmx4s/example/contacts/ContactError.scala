@@ -1,25 +1,22 @@
 package htmx4s.example.contacts
 
-import htmx4s.http4s.util.ErrorMessage
-import cats.data.NonEmptyList
-import htmx4s.http4s.util.ValidationErrors
 import cats.data.Validated
+import cats.syntax.all.*
+
+import htmx4s.http4s.util.ValidationErrors
 
 object ContactError:
-  opaque type Key = String
+  enum Key:
+    case Default
+    case Email
+    case Phone
+    case FirstName
+    case LastName
+    case Name
 
-  object Key:
-    extension (self: Key)
-      def value: String = self
-      def msg(m1: String, mn: String*): ErrorMessage[Key, String] =
-        ErrorMessage(self, NonEmptyList(m1, mn.toList))
+  def emailExists[A]: ContactValid[A] = ValidationErrors
+    .one(Key.Email, s"Email already exists!")
+    .invalid
 
-    val default: Key = "*default*"
-    val email: Key = "email"
-    val phone: Key = "phone"
-    val firstName: Key = "firstName"
-    val lastName: Key = "lastName"
-    val name: Key = "name"
-
-  type Errors = ValidationErrors[Key, String]
-  type ContactValid[A] = Validated[Errors, A]
+type Errors = ValidationErrors[ContactError.Key, String]
+type ContactValid[A] = Validated[Errors, A]

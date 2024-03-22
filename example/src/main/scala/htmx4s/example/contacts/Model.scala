@@ -24,12 +24,12 @@ object Model:
       phone: Option[String]
   ):
     def toContact(id: Long): ContactValid[Contact] =
-      val fn = firstName.asNonEmpty(Key.firstName, "first name is required")
-      val ln = lastName.asNonEmpty(Key.lastName, "last name is required")
+      val fn = firstName.asNonEmpty(Key.FirstName, "first name is required")
+      val ln = lastName.asNonEmpty(Key.LastName, "last name is required")
       val name =
-        (fn, ln).mapN((a, b) => Name.create(a, b).keyed(Key.name)).andThen(identity)
-      val em = email.traverse(Email(_).keyed(Key.email))
-      val ph = phone.traverse(PhoneNumber(_).keyed(Key.phone))
+        (fn, ln).mapN((a, b) => Name.create(a, b).keyed(Key.Name)).andThen(identity)
+      val em = email.traverse(Email(_).keyed(Key.Email))
+      val ph = phone.traverse(PhoneNumber(_).keyed(Key.Phone))
       val vid = id.valid[Key, String]
       (vid, name, ph, em).mapN(Contact.apply)
 
@@ -38,8 +38,8 @@ object Model:
       (
         field[String]("firstName"),
         field[String]("lastName"),
-        fieldOptional[String]("email"),
-        fieldOptional[String]("phone")
+        fieldOptional[String]("email").sanitized,
+        fieldOptional[String]("phone").sanitized
       ).mapN(ContactEditForm.apply)
 
     val empty: ContactEditForm = ContactEditForm("", "", None, None)
@@ -55,7 +55,7 @@ object Model:
   final case class ContactEditPage(
       id: Option[Long],
       form: ContactEditForm,
-      validationErrors: Option[ContactError.Errors]
+      validationErrors: Option[Errors]
   ):
     def fullName: Option[String] =
       for {

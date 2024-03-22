@@ -10,3 +10,5 @@ object Params:
   object Page extends OptionalQueryParamDecoderMatcher[Int]("page")
 
   object Email extends QueryParamDecoderMatcher[String]("email")
+
+  object IdOpt extends OptionalQueryParamDecoderMatcher[Long]("id")

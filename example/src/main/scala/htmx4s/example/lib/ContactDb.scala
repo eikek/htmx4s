@@ -45,7 +45,10 @@ object ContactDb:
             .map(id => contact.copy(id = id))
             .flatMap(c =>
               data.modify { m =>
-                if (c.email.isDefined && m.values.exists(_.email == c.email))
+                if (
+                  c.email.isDefined && m.values
+                    .exists(e => e.email == c.email && e.id != c.id)
+                )
                   (m, UpdateResult.EmailDuplicate)
                 else (m.updated(c.id, c), UpdateResult.Success(c.id))
               }

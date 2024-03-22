@@ -17,7 +17,7 @@ object Main extends IOApp:
   private val selfWebjar = WebjarRoute.Webjar("self")("htmx4s-example", "", "")
   def createRoutes(db: ContactDb[IO]): HttpRoutes[IO] = Router.of(
     "/assets" -> WebjarRoute.withHtmx[IO](selfWebjar).serve,
-    "/ui" -> contacts.Routes[IO](db).routes
+    "/ui" -> contacts.Routes[IO](contacts.RoutesApi(db)).routes
   )
 
   def run(args: List[String]): IO[ExitCode] =

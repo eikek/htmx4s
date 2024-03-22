@@ -67,7 +67,7 @@ object Views:
     ul(attr.`class` := s"error-list $hidden", errors.map(m => li(m)))
 
   def errorList(
-      errors: Option[ContactError.Errors],
+      errors: Option[Errors],
       key: ContactError.Key
   ): TypedTag[String] =
     errorList(errors.flatMap(_.find(key)).map(_.toList).getOrElse(Nil))
@@ -75,7 +75,7 @@ object Views:
   def editContact(
       c: ContactEditForm,
       id: Option[Long],
-      formErrors: Option[ContactError.Errors]
+      formErrors: Option[Errors]
   ) =
     div(
       form(
@@ -86,6 +86,7 @@ object Views:
           div(
             cls := "flex flex-col w-1/2",
             label(attr.`for` := "email", cls := "font-semibold text-md", "Email"),
+            id.map(n => input(cls := "hidden", attr.`type` := "hidden", attr.name := "id", attr.value := n)),
             input(
               cls := inputStyle,
               attr.name := "email",
@@ -94,11 +95,12 @@ object Views:
               attr.placeholder := "Email",
               attr.value := c.email.orEmpty,
               attr.hxGet := "/ui/contacts/email-check",
+              attr.hxInclude := "[name='id']",
               attr.hxTarget := "next .error-list",
               attr.hxSwap := "outerHTML",
               attr.hxTrigger := "change, keyup delay:200ms changed"
             ),
-            errorList(formErrors, ContactError.Key.email)
+            errorList(formErrors, ContactError.Key.Email)
           ),
           p(
             label(attr.`for` := "name.first", "First Name"),
@@ -110,7 +112,7 @@ object Views:
               attr.placeholder := "First Name",
               attr.value := c.firstName
             ),
-            errorList(formErrors, ContactError.Key.firstName)
+            errorList(formErrors, ContactError.Key.FirstName)
           ),
           p(
             label(attr.`for` := "name.last", "Last Name"),
@@ -122,7 +124,7 @@ object Views:
               attr.placeholder := "Last Name",
               attr.value := c.lastName
             ),
-            errorList(formErrors, ContactError.Key.lastName)
+            errorList(formErrors, ContactError.Key.LastName)
           ),
           p(
             label(attr.`for` := "phone", "Phone"),
@@ -134,12 +136,12 @@ object Views:
               attr.placeholder := "Phone",
               attr.value := c.phone.orEmpty
             ),
-            errorList(formErrors, ContactError.Key.phone)
+            errorList(formErrors, ContactError.Key.Phone)
           ),
           button(cls := btnStyle, "Save")
         )
       ),
-      errorList(formErrors, ContactError.Key.default),
+      errorList(formErrors, ContactError.Key.Default),
       id.map { n =>
         button(
           cls := btnStyle + " mx-3",
