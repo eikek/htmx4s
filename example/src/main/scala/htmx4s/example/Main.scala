@@ -21,18 +21,17 @@ object Main extends IOApp:
   )
 
   def run(args: List[String]): IO[ExitCode] =
-    for {
-      db <- ContactDb[IO]
-      routes = createRoutes(db)
-      _ <-
-        EmberServerBuilder
-          .default[IO]
-          .withHost(host"0.0.0.0")
-          .withPort(port"8888")
-          .withHttpApp(
-            Http4sLogger.httpApp(true, true)(routes.orNotFound)
-          )
-          .withShutdownTimeout(500.millis)
-          .build
-          .use(_ => IO.never)
-    } yield ExitCode.Success
+    ContactDb[IO].use { db =>
+      val routes = createRoutes(db)
+      EmberServerBuilder
+        .default[IO]
+        .withHost(host"0.0.0.0")
+        .withPort(port"8888")
+        .withHttpApp(
+          Http4sLogger.httpApp(true, true)(routes.orNotFound)
+        )
+        .withShutdownTimeout(500.millis)
+        .build
+        .use(_ => IO.never)
+        .as(ExitCode.Success)
+    }

@@ -4,6 +4,8 @@ object Dependencies {
 
   object V {
     val scala3 = "3.3.3"
+    val doobie = "1.0.0-RC5"
+    val h2 = "2.2.224"
     val htmx = "1.9.11"
     val http4s = "0.23.26"
     val http4sScalatags = "0.25.2"
@@ -13,9 +15,18 @@ object Dependencies {
     val scribe = "3.13.0"
   }
 
+  val doobie = Seq(
+    "org.tpolecat" %% "doobie-core" % V.doobie,
+    "org.tpolecat" %% "doobie-hikari" % V.doobie
+  )
+  val h2 = Seq(
+    "com.h2database" % "h2" % V.h2
+  )
+
   val scribe = Seq(
     "com.outr" %% "scribe" % V.scribe,
-    "com.outr" %% "scribe-slf4j2" % V.scribe
+    "com.outr" %% "scribe-slf4j2" % V.scribe,
+    "com.outr" %% "scribe-cats" % V.scribe
   )
 
   val htmx = Seq(

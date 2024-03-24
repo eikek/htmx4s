@@ -145,7 +145,9 @@ val example = project
     libraryDependencies ++= Dependencies.htmx ++
       Dependencies.http4sEmber ++
       Dependencies.http4sScalatags ++
-      Dependencies.scribe
+      Dependencies.scribe ++
+      Dependencies.doobie ++
+      Dependencies.h2
   )
   .dependsOn(constants, scalatags, http4s)
 

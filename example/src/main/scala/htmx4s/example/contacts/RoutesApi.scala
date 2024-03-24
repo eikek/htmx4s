@@ -13,7 +13,7 @@ trait RoutesApi[F[_]]:
   def upsert(
       form: ContactEditForm,
       id: Option[Long]
-  ): F[ContactValid[Long]]
+  ): F[Option[ContactValid[Long]]]
   def checkMail(id: Option[Long], emailStr: String): F[ContactValid[Email]]
   def delete(id: Long): F[Boolean]
   def findById(id: Long): F[Option[Contact]]
@@ -29,15 +29,16 @@ object RoutesApi:
       def upsert(
           form: ContactEditForm,
           id: Option[Long]
-      ): F[ContactValid[Long]] =
+      ): F[Option[ContactValid[Long]]] =
         form
           .toContact(id.getOrElse(-1L))
           .fold(
-            _.invalid.pure[F],
+            _.invalid.some.pure[F],
             c =>
               db.upsert(c).map {
-                case UpdateResult.Success(id)    => id.valid
-                case UpdateResult.EmailDuplicate => ContactError.emailExists
+                case UpdateResult.Success(id)    => id.valid.some
+                case UpdateResult.EmailDuplicate => ContactError.emailExists.some
+                case UpdateResult.NotFound => None
               }
           )
 

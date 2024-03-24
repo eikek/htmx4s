@@ -15,49 +15,44 @@ trait ContactDb[F[_]]:
 object ContactDb:
   enum UpdateResult:
     case Success(id: Long)
+    case NotFound
     case EmailDuplicate
 
-  def apply[F[_]: Sync]: F[ContactDb[F]] =
-    val contacts = Ref.of[F, Map[Long, Contact]](Map.empty)
-    val idGen = Ref.of[F, Long](0)
-    (contacts, idGen).mapN { case (data, ids) =>
+  def apply[F[_]: Async]: Resource[F, ContactDb[F]] =
+    H2Database.create[F]().map { db =>
       new ContactDb[F] {
         def search(query: Option[String], page: Option[Int]): F[List[Contact]] =
-          val q = query.map(_.toLowerCase)
+          val q = query.map(_.toLowerCase).map(e => s"%$e%")
           val skip = (page.getOrElse(1) - 1) * 10
-          data.get.map(
-            _.values
-              .filter(c => q.forall(c.contains))
-              .toList
-              .sortBy(_.name)
-              .drop(skip)
-              .take(10)
-          )
+          db.selectContacts(q, 10, skip)
 
         def delete(id: Long): F[Boolean] =
-          data.modify(m => (m.removed(id), m.contains(id)))
+          db.delete(id)
 
         def upsert(contact: Contact): F[UpdateResult] =
-          val id =
-            if (contact.id > 0) contact.id.pure[F]
-            else ids.updateAndGet(_ + 1)
-          id
-            .map(id => contact.copy(id = id))
-            .flatMap(c =>
-              data.modify { m =>
-                if (
-                  c.email.isDefined && m.values
-                    .exists(e => e.email == c.email && e.id != c.id)
-                )
-                  (m, UpdateResult.EmailDuplicate)
-                else (m.updated(c.id, c), UpdateResult.Success(c.id))
+          contact.email.flatTraverse(db.findByEmail).flatMap {
+            case Some(existing) if contact.id > 0 =>
+              if (existing.id != contact.id) UpdateResult.EmailDuplicate.pure[F]
+              else
+                db.update(contact).map {
+                  case true  => UpdateResult.Success(contact.id)
+                  case false => UpdateResult.NotFound
+                }
+            case None if contact.id > 0 =>
+              db.update(contact).map {
+                case true  => UpdateResult.Success(contact.id)
+                case false => UpdateResult.NotFound
               }
-            )
+            case Some(_) =>
+              UpdateResult.EmailDuplicate.pure[F]
+            case None =>
+              db.insert(contact).map(UpdateResult.Success(_))
+          }
 
         def findByEmail(email: Email): F[Option[Contact]] =
-          data.get.map(_.values.find(_.email.exists(_ == email)))
+          db.findByEmail(email)
 
         def findById(id: Long): F[Option[Contact]] =
-          data.get.map(_.get(id))
+          db.findById(id)
       }
     }

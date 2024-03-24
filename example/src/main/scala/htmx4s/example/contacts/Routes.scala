@@ -13,20 +13,26 @@ import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+import htmx4s.http4s.headers.HxTrigger
 
 // TODO:
 // - accept / content-type negotiation
 
 final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
   def routes: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root / "contacts" :? Params.Query(q) +& Params.Page(p) =>
+    case req @ GET -> Root / "contacts" :? Params.Query(q) +& Params.Page(p) =>
       for {
         result <- api.search(q, p)
-        _ <- Async[F].blocking(println(s"result: $result"))
-        view = Views.contactListPage(
-          ContactListPage(result, q.filter(_.nonEmpty), p.getOrElse(1))
-        )
-        resp <- Ok(view)
+        resp <- req.headers
+          .get[HxTrigger]
+          .whenIn(Views.searchControls)(
+            Ok(Views.contactTable(result, p.getOrElse(1))),
+            Ok(
+              Views.contactListPage(
+                ContactListPage(result, q.filter(_.nonEmpty), p.getOrElse(1))
+              )
+            )
+          )
       } yield resp
 
     case GET -> Root / "contacts" / "new" =>
@@ -36,9 +42,12 @@ final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
       for {
         formInput <- req.as[ContactEditForm]
         result <- api.upsert(formInput, None)
-        resp <- result.fold(
-          errs => Ok(Views.editContactPage(ContactEditPage(None, formInput, errs.some))),
-          _ => SeeOther(Location(uri"/ui/contacts"))
+        resp <- result.fold(Ok(Views.notFoundPage))(
+          _.fold(
+            errs =>
+              Ok(Views.editContactPage(ContactEditPage(None, formInput, errs.some))),
+            _ => SeeOther(Location(uri"/ui/contacts"))
+          )
         )
       } yield resp
 
@@ -65,10 +74,12 @@ final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
       for {
         formInput <- req.as[ContactEditForm]
         result <- api.upsert(formInput, id.some)
-        resp <- result.fold(
-          errs =>
-            Ok(Views.editContactPage(ContactEditPage(id.some, formInput, errs.some))),
-          _ => SeeOther(Location(uri"/ui/contacts"))
+        resp <- result.fold(Ok(Views.notFoundPage))(
+          _.fold(
+            errs =>
+              Ok(Views.editContactPage(ContactEditPage(id.some, formInput, errs.some))),
+            _ => SeeOther(Location(uri"/ui/contacts"))
+          )
         )
       } yield resp
 
