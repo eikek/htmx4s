@@ -18,7 +18,6 @@ object Model:
       val lname = Validated.condNel(last.nonEmpty, last, "Last Name must not be empty")
       (fname, lname).mapN(Name.apply)
 
-
   opaque type Email = String
   object Email:
     def apply(email: String): ValidatedNel[String, Email] =

@@ -11,6 +11,7 @@ trait ContactDb[F[_]]:
   def upsert(contact: Contact): F[ContactDb.UpdateResult]
   def findById(id: Long): F[Option[Contact]]
   def findByEmail(email: Email): F[Option[Contact]]
+  def count: F[Long]
 
 object ContactDb:
   enum UpdateResult:
@@ -25,6 +26,8 @@ object ContactDb:
           val q = query.map(_.toLowerCase).map(e => s"%$e%")
           val skip = (page.getOrElse(1) - 1) * 10
           db.selectContacts(q, 10, skip)
+
+        def count: F[Long] = db.countAll
 
         def delete(id: Long): F[Boolean] =
           db.delete(id)

@@ -18,12 +18,14 @@ trait RoutesApi[F[_]]:
   def delete(id: Long): F[Boolean]
   def findById(id: Long): F[Option[Contact]]
   def search(query: Option[String], page: Option[Int]): F[List[Contact]]
+  def countAll: F[Long]
 
 object RoutesApi:
   def apply[F[_]: Sync](db: ContactDb[F]): RoutesApi[F] =
     new RoutesApi[F] {
       def search(query: Option[String], page: Option[Int]): F[List[Contact]] =
         db.search(query, page)
+      def countAll: F[Long] = db.count
       def findById(id: Long): F[Option[Contact]] = db.findById(id)
       def delete(id: Long): F[Boolean] = db.delete(id)
       def upsert(
@@ -38,7 +40,7 @@ object RoutesApi:
               db.upsert(c).map {
                 case UpdateResult.Success(id)    => id.valid.some
                 case UpdateResult.EmailDuplicate => ContactError.emailExists.some
-                case UpdateResult.NotFound => None
+                case UpdateResult.NotFound       => None
               }
           )
 
@@ -50,7 +52,7 @@ object RoutesApi:
             email =>
               db.findByEmail(email).map {
                 case Some(c) if id.forall(_ != c.id) => ContactError.emailExists
-                case _                            => email.valid
+                case _                               => email.valid
               }
           )
     }

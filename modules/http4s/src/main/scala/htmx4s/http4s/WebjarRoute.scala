@@ -44,7 +44,7 @@ final class WebjarRoute[F[_]: Sync](
             StaticFile.fromResource(
               name = s"$prefix/$p",
               req = Some(req),
-              true
+              preferGzipped = true
             )
           case _ =>
             OptionT.pure(Response.notFound[F])

@@ -1,7 +1,7 @@
 package htmx4s.http4s.util
 
-import cats.kernel.Monoid
 import cats.data.{Validated, ValidatedNel}
+import cats.kernel.Monoid
 
 object ValidationDsl extends ValidationDsl
 trait ValidationDsl:
@@ -10,7 +10,7 @@ trait ValidationDsl:
     def keyed[K](key: K): ErrorMessage[K, A] =
       ErrorMessage.of(key, self)
 
-    def valid[K,M]: Validated[ValidationErrors[K,M], A] = Validated.valid(self)
+    def valid[K, M]: Validated[ValidationErrors[K, M], A] = Validated.valid(self)
 
     def emptyOption(using m: Monoid[A]): Option[A] =
       if (m.empty == self) None else Some(self)

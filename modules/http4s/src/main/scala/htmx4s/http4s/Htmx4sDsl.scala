@@ -1,13 +1,14 @@
 package htmx4s.http4s
 
+import cats.Functor
 import cats.effect.*
 import cats.syntax.all.*
 
+import htmx4s.http4s.headers.HxTrigger
+import htmx4s.http4s.headers.Vary
+
 import org.http4s.*
 import org.http4s.dsl.Http4sDsl
-import cats.Functor
-import htmx4s.http4s.headers.Vary
-import htmx4s.http4s.headers.HxTrigger
 
 trait Htmx4sDsl[F[_]] extends Http4sDsl[F]:
 

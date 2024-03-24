@@ -38,7 +38,8 @@ object Views:
             attr.content := "width=device-width, initial-scale=1, user-scalable=yes"
           ),
           script(attr.src := "/assets/htmx/htmx.min.js", attr.crossorigin := "anonymous"),
-          link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet")
+          link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet"),
+          script(attr.src := "/assets/self/custom.js", attr.crossorigin := "anonymous")
         ),
         body(
           cls := "container mx-auto mx-2 bg-white text-gray-900 dark:bg-slate-800 dark:text-slate-100",
@@ -73,6 +74,9 @@ object Views:
         a(cls := Style.btn, attr.href := "/ui/contacts", "Back")
       )
     )
+
+  def countSnippet(n: Long): TypedTag[String] =
+    span(cls := "ml-2 text-sm", s"$n total contacts")
 
   def showContactPage(m: ContactShowPage) =
     layout(m.contact.fullName)(showContact(m.contact))
@@ -215,7 +219,8 @@ object Views:
               attr.hxGet := "/ui/contacts",
               attr.hxTarget := "table",
               attr.hxTrigger := "search, keyup delay:200ms changed",
-              attr.hxPushUrl := true
+              attr.hxPushUrl := true,
+              attr.hxIndicator := "#spinner"
             ),
             a(
               cls := Style.btn,
@@ -224,8 +229,14 @@ object Views:
               attr.hxTarget := "table",
               attr.id := Id.searchBtn,
               attr.hxPushUrl := true,
+              attr.hxIndicator := "#spinner",
               "Search"
             )
+          ),
+          div(
+            attr.id := "spinner",
+            cls := "h-8 w-8 px-1 py-1 animate-spin htmx-indicator",
+            "●"
           ),
           div(
             cls := "flex-grow flex flex-row items-center justify-end",
@@ -233,11 +244,26 @@ object Views:
               cls := Style.link + " inline-block",
               attr.href := "/ui/contacts/new",
               "Add Contact"
+            ),
+            span(
+              attr.hxGet := "/ui/contacts/count",
+              attr.hxTrigger := "load"
             )
           )
         ),
-        div(
-          contactTable(m.contacts, m.page)
+        form(
+          cls := "flex flex-col",
+          contactTable(m.contacts, m.page),
+          div(
+            cls := "mt-3",
+            a(
+              cls := Style.btn,
+              attr.hxDelete := "/ui/contacts",
+              attr.hxConfirm := "Are you sure?",
+              attr.hxTarget := "body",
+              "Delete selected contacts"
+            )
+          )
         )
       )
     )
@@ -248,6 +274,7 @@ object Views:
       thead(
         tr(
           cls := "py-4 bg-grey-100 dark:bg-slate-700 border-b border-grey-100 dark:border-slate-700",
+          th(),
           th(cls := "text-center", "Id"),
           th(cls := "text-left", "Name"),
           th(cls := "text-left", "E-Mail"),
@@ -258,13 +285,23 @@ object Views:
       tbody(
         contacts.map(c =>
           tr(
-            cls := "py-2 border-b border-grey-100 dark:border-slate-700",
+            cls := "py-2 border-b border-grey-100 dark:border-slate-700 hover:bg-grey-50 dark:hover:bg-slate-700 hover:bg-opacity-25",
+            hxOn"mouseenter" := "C.moveClass(event, '.actions', 'invisible', 'visible')",
+            hxOn"mouseleave" := "C.moveClass(event, '.actions', 'visible', 'invisible')",
+            td(
+              cls := "",
+              input(
+                attr.`type` := "checkbox",
+                attr.name := "selectedId[]",
+                attr.value := c.id
+              )
+            ),
             td(cls := "text-center px-2", c.id),
             td(cls := "text-left px-2", c.fullName),
             td(cls := "text-left px-2", c.email.map(_.value).getOrElse("-")),
             td(cls := "text-left px-2", c.phone.map(_.value).getOrElse("-")),
             td(
-              cls := "flex flex-row items-center justify-end space-x-2 text-sm",
+              cls := "actions flex flex-row items-center justify-end space-x-2 text-sm invisible",
               a(cls := Style.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
               a(cls := Style.btn, attr.href := s"/ui/contacts/${c.id}", "View")
             )
@@ -281,6 +318,7 @@ object Views:
                 attr.hxSwap := "outerHTML",
                 attr.hxSelect := "tbody > tr",
                 attr.hxGet := s"/ui/contacts?page=${page + 1}",
+                attr.hxIndicator := "#spinner",
                 "Load More"
               )
             )

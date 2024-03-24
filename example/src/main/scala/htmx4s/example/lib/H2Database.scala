@@ -18,6 +18,7 @@ private trait H2Database[F[_]]:
   def insert(c: Contact): F[Long]
   def update(c: Contact): F[Boolean]
   def delete(id: Long): F[Boolean]
+  def countAll: F[Long]
 
 private object H2Database extends DoobieInstances:
 
@@ -65,6 +66,8 @@ private object H2Database extends DoobieInstances:
     }
 
     val selectFrag = sql"select id, first_name, last_name, phone, email from contact "
+    def countAll: F[Long] =
+      sql"select count(id) from contact".query[Long].unique.transact(ta)
 
     def selectContacts(
         contains: Option[String],

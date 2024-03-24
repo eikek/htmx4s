@@ -11,3 +11,8 @@ object Bundle extends Text.Cap with text.Tags with text.Tags2 with Text.Aggregat
       with HtmxAttributes[text.Builder, String, String]
 
   val cls = attr.`class`
+
+  def hxOn(event: String): Attr = attr(s"hx-on:$event")
+
+  extension (sc: StringContext)
+    def hxOn(event: Any*): Attr = attr(s"hx-on:${event.mkString}")

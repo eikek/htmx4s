@@ -1,13 +1,15 @@
 package htmx4s.example.contacts
 
+import cats.data.Validated
 import cats.syntax.all.*
-import htmx4s.example.lib.Model.*
+
 import htmx4s.example.contacts.ContactError.*
+import htmx4s.example.lib.Model.*
+import htmx4s.http4s.util.ValidationDsl.*
+import htmx4s.http4s.util.ValidationErrors
+
 import org.http4s.FormDataDecoder
 import org.http4s.FormDataDecoder.*
-import cats.data.Validated
-import htmx4s.http4s.util.ValidationErrors
-import htmx4s.http4s.util.ValidationDsl.*
 
 object Model:
 
@@ -16,6 +18,11 @@ object Model:
       query: Option[String],
       page: Int
   )
+
+  final case class SelectedIds(selectedId: List[Long])
+  object SelectedIds:
+    given FormDataDecoder[SelectedIds] =
+      listOf[Long]("selectedId").map(SelectedIds.apply)
 
   final case class ContactEditForm(
       firstName: String,

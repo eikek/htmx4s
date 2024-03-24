@@ -135,7 +135,7 @@ val http4s = project
 
 val example = project
   .in(file("example"))
-  .enablePlugins(RevolverPlugin, TailwindCssPlugin)
+  .enablePlugins(RevolverPlugin, TailwindCssPlugin, JsPlugin)
   .settings(sharedSettings)
   .settings(scalafixSettings)
   .settings(noPublish)

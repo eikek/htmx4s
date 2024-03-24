@@ -1,7 +1,7 @@
 package htmx4s.http4s.util
 
-import cats.data.NonEmptyList
 import cats.Semigroup
+import cats.data.NonEmptyList
 
 final case class ValidationErrors[K, M](
     errors: NonEmptyList[ErrorMessage[K, M]]

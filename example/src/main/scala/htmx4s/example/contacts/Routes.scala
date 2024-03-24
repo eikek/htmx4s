@@ -8,15 +8,12 @@ import htmx4s.example.contacts.Model.*
 import htmx4s.example.contacts.Views.notFoundPage
 import htmx4s.example.lib.Model.*
 import htmx4s.http4s.Htmx4sDsl
+import htmx4s.http4s.headers.HxTrigger
 
 import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
-import htmx4s.http4s.headers.HxTrigger
-
-// TODO:
-// - accept / content-type negotiation
 
 final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
   def routes: HttpRoutes[F] = HttpRoutes.of {
@@ -34,6 +31,9 @@ final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             )
           )
       } yield resp
+
+    case GET -> Root / "contacts" / "count" =>
+      api.countAll.flatMap(n => Ok(Views.countSnippet(n)))
 
     case GET -> Root / "contacts" / "new" =>
       Ok(Views.editContactPage(ContactEditPage.empty))
@@ -81,6 +81,14 @@ final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             _ => SeeOther(Location(uri"/ui/contacts"))
           )
         )
+      } yield resp
+
+    case req @ DELETE -> Root / "contacts" =>
+      for {
+        ids <- req.as[SelectedIds]
+        _ <- ids.selectedId.traverse(api.delete)
+        all <- api.search(None, None)
+        resp <- Ok(Views.contactListPage(ContactListPage(all, None, 1)))
       } yield resp
 
     case DELETE -> Root / "contacts" / LongVar(id) =>
