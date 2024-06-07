@@ -1,7 +1,7 @@
 import Dependencies.V
 import com.github.sbt.git.SbtGit.GitKeys._
 
-addCommandAlias("ci", "make; lint; test")
+addCommandAlias("ci", "Test/compile; lint; test; publishLocal")
 addCommandAlias(
   "lint",
   "scalafmtSbtCheck; scalafmtCheckAll; Compile/scalafix --check; Test/scalafix --check"
@@ -148,6 +148,25 @@ val example = project
       Dependencies.scribe ++
       Dependencies.doobie ++
       Dependencies.h2
+  )
+  .dependsOn(constants, scalatags, http4s)
+
+val updateReadme = inputKey[Unit]("Update readme")
+lazy val readme = project
+  .in(file("modules/readme"))
+  .enablePlugins(MdocPlugin)
+  .settings(sharedSettings)
+  .settings(scalafixSettings)
+  .settings(noPublish)
+  .settings(
+    name := "htmx4s-readme",
+    mdocIn := (LocalRootProject / baseDirectory).value / "docs" / "readme.md",
+    mdocOut := (LocalRootProject / baseDirectory).value / "README.md",
+    fork := true,
+    updateReadme := {
+      mdoc.evaluated
+      ()
+    }
   )
   .dependsOn(constants, scalatags, http4s)
 
