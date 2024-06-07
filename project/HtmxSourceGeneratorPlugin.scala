@@ -27,7 +27,7 @@ object HtmxSourceGeneratorPlugin extends AutoPlugin {
 
   val htmxSettings = Seq(
     htmxRepositoryUrl := "https://github.com/bigskysoftware/htmx",
-    htmxRepositoryRef := "v1.9.11",
+    htmxRepositoryRef := "v1.9.12",
     htmxRepositoryTarget := (Compile / Keys.target).value / "htmx-repo",
     htmxReferencePath := "www/content/reference.md",
     htmxGenerateSettings := HtmxSettings(),
