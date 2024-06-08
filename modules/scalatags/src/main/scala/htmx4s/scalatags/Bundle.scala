@@ -15,4 +15,4 @@ object Bundle extends Text.Cap with text.Tags with text.Tags2 with Text.Aggregat
   def hxOn(event: String): Attr = attr(s"hx-on:$event")
 
   extension (sc: StringContext)
-    def hxOn(event: Any*): Attr = attr(s"hx-on:${event.mkString}")
+    def hxOn(args: Any*): Attr = attr(s"hx-on:${sc.s(args: _*)}")

@@ -30,7 +30,7 @@ object Main extends IOApp:
         .withHttpApp(
           Http4sLogger.httpApp(true, true)(routes.orNotFound)
         )
-        .withShutdownTimeout(500.millis)
+        .withShutdownTimeout(0.millis)
         .build
         .use(_ => IO.never)
         .as(ExitCode.Success)

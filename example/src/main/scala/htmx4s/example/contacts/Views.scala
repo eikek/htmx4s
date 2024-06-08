@@ -39,7 +39,7 @@ object Views:
           ),
           script(attr.src := "/assets/htmx/htmx.min.js", attr.crossorigin := "anonymous"),
           link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet"),
-          script(attr.src := "/assets/self/custom.js", attr.crossorigin := "anonymous")
+          script(attr.src := "/assets/self/all.min.js", attr.crossorigin := "anonymous")
         ),
         body(
           cls := "container mx-auto mx-2 bg-white text-gray-900 dark:bg-slate-800 dark:text-slate-100",

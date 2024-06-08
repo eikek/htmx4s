@@ -17,6 +17,7 @@
         devshell-tools.packages.${system}.sbt17
         jdk17
         tailwindcss
+        terser
       ];
       devshellPkgs =
         ciPkgs
