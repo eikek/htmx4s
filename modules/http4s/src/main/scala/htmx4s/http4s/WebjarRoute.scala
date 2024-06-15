@@ -6,8 +6,8 @@ import cats.effect.Sync
 
 import htmx4s.http4s.WebjarRoute.Webjar
 
+import org.http4s.*
 import org.http4s.Uri.Path
-import org.http4s._
 
 final class WebjarRoute[F[_]: Sync](
     webjars: Seq[Webjar],
@@ -34,7 +34,7 @@ final class WebjarRoute[F[_]: Sync](
       case None => None
 
   val serve: HttpRoutes[F] =
-    Kleisli {
+    Kleisli:
       case req if req.method == Method.GET =>
         val last = req.pathInfo.segments.lastOption.map(_.decoded()).getOrElse("")
         val containsUp = req.pathInfo.segments.exists(_.encoded.contains(".."))
@@ -51,7 +51,6 @@ final class WebjarRoute[F[_]: Sync](
 
       case _ =>
         OptionT.none
-    }
 
 object WebjarRoute:
   def forHtmx[F[_]: Sync] = WebjarRoute[F](Seq(Webjar.htmx1911))

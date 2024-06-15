@@ -3,8 +3,8 @@ package htmx4s.example.contacts
 import cats.effect.*
 import cats.syntax.all.*
 
-import htmx4s.example.contacts.Model.ContactEditForm
 import htmx4s.example.contacts.Model.*
+import htmx4s.example.contacts.Model.ContactEditForm
 import htmx4s.example.contacts.Views.notFoundPage
 import htmx4s.example.lib.Model.*
 import htmx4s.http4s.Htmx4sDsl
@@ -16,7 +16,7 @@ import org.http4s.implicits.*
 import org.http4s.scalatags.*
 
 final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
-  def routes: HttpRoutes[F] = HttpRoutes.of {
+  def routes: HttpRoutes[F] = HttpRoutes.of:
     case req @ GET -> Root / "contacts" :? Params.Query(q) +& Params.Page(p) =>
       for {
         result <- api.search(q, p)
@@ -108,4 +108,3 @@ final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           _ => Ok(Views.errorList(Nil))
         )
       } yield resp
-  }

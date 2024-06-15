@@ -11,11 +11,10 @@ import scalatags.Text.all.doctype
 
 object Views:
   lazy val searchControls: Set[String] = Set(Id.searchBtn, Id.searchInput)
-  private object Id {
+  private object Id:
     val searchBtn = "search-btn"
     val searchInput = "search-input"
-  }
-  private object Style {
+  private object Style:
     val link = "text-blue-500 hover:text-blue-600 cursor-pointer"
     val btn =
       "px-2 py-1 rounded border border-blue-500 bg-blue-200 bg-opacity-50 text-blue-800 cursor-pointer hover:bg-opacity-75 dark:border-orange-700 dark:bg-orange-800 dark:text-white"
@@ -23,7 +22,6 @@ object Views:
       "text-lg border rounded ml-2 my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
     val searchInput =
       "border rounded my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
-  }
 
   def layout(titleStr: String)(content: TypedTag[String]) =
     doctype("html")(

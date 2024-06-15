@@ -3,16 +3,16 @@ import sbt._
 object Dependencies {
 
   object V {
-    val scala3 = "3.3.3"
+    val scala3 = "3.4.2"
     val doobie = "1.0.0-RC5"
     val h2 = "2.2.224"
-    val htmx = "1.9.11"
-    val http4s = "0.23.26"
+    val htmx = "1.9.12"
+    val http4s = "0.23.27"
     val http4sScalatags = "0.25.2"
-    val munit = "0.7.29"
-    val munitCatsEffect = "1.0.7"
-    val scalatags = "0.12.0"
-    val scribe = "3.13.0"
+    val munit = "1.0.0"
+    val munitCatsEffect = "2.0.0"
+    val scalatags = "0.13.1"
+    val scribe = "3.13.5"
   }
 
   val doobie = Seq(
@@ -47,6 +47,6 @@ object Dependencies {
   val munit = Seq(
     "org.scalameta" %% "munit" % V.munit,
     "org.scalameta" %% "munit-scalacheck" % V.munit,
-    "org.typelevel" %% "munit-cats-effect-3" % V.munitCatsEffect
+    "org.typelevel" %% "munit-cats-effect" % V.munitCatsEffect
   )
 }

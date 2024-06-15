@@ -22,7 +22,7 @@ trait RoutesApi[F[_]]:
 
 object RoutesApi:
   def apply[F[_]: Sync](db: ContactDb[F]): RoutesApi[F] =
-    new RoutesApi[F] {
+    new RoutesApi[F]:
       def search(query: Option[String], page: Option[Int]): F[List[Contact]] =
         db.search(query, page)
       def countAll: F[Long] = db.count
@@ -55,4 +55,3 @@ object RoutesApi:
                 case _                               => email.valid
               }
           )
-    }
