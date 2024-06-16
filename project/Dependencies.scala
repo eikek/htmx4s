@@ -12,7 +12,7 @@ object Dependencies {
     val munit = "1.0.0"
     val munitCatsEffect = "2.0.0"
     val scalatags = "0.13.1"
-    val scribe = "3.13.5"
+    val scribe = "3.15.0"
   }
 
   val doobie = Seq(
