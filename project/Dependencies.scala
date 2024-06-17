@@ -6,7 +6,7 @@ object Dependencies {
     val scala3 = "3.4.2"
     val doobie = "1.0.0-RC5"
     val h2 = "2.2.224"
-    val htmx = "1.9.12"
+    val htmx = "2.0.0"
     val http4s = "0.23.27"
     val http4sScalatags = "0.25.2"
     val munit = "1.0.0"
@@ -30,7 +30,7 @@ object Dependencies {
   )
 
   val htmx = Seq(
-    "org.webjars.npm" % "htmx.org" % V.htmx
+    "org.webjars.npm" % "htmx.org" % s"${V.htmx}-beta4"
   )
 
   val http4s = Seq(
