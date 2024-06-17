@@ -14,6 +14,7 @@ import org.http4s.server.Router
 import org.http4s.server.middleware.Logger as Http4sLogger
 
 object Main extends IOApp:
+  // refers to our own js and css stuff, version is not needed
   private val selfWebjar = WebjarRoute.Webjar("self")("htmx4s-example", "", "")
   def createRoutes(db: ContactDb[IO]): HttpRoutes[IO] = Router.of(
     "/assets" -> WebjarRoute.withHtmx[IO](selfWebjar).serve,
