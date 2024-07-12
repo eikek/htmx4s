@@ -23,6 +23,11 @@ htmx value is readily available in the IDE.
 This module contains traits that have all htmx attributes, events,
 request/response header names and classes as scala values.
 
+sbt:
+```
+libraryDependencies += "com.github.eikek" %% "htmx4s-constants" % "$VERSION"
+```
+
 ## htmx4s-scalatags
 
 Provides attribute definitions for htmx. Importing the custom `Bundle`
@@ -30,10 +35,28 @@ gives access to all the htmx attributes.
 
 The htmx markdown documentation is also used here to generate code.
 
+sbt:
+```
+libraryDependencies += "com.github.eikek" %% "htmx4s-scalatags" % "$VERSION"
+```
+
+
 ## htmx4s-http4s
 
 Provides htmx header definitions for http4s, a small dsl extension for
 htmx operations and some other small utilities.
+
+sbt:
+```
+libraryDependencies += "com.github.eikek" %% "htmx4s-http4s" % "$VERSION"
+```
+
+Additionally, the `http4s-scalatags` utility library is probably
+useful to include as well:
+
+```
+libraryDependencies += "org.http4s" %% "http4s-scalatags" % "version"
+```
 
 
 # The example contact app
