@@ -16,6 +16,9 @@ final case class ValidationErrors[K, M](
 
   def findList(key: K): List[M] = find(key).map(_.toList).getOrElse(Nil)
 
+  def mkString(sep: String): String =
+    errors.flatMap(_.messages).toList.mkString(sep)
+
 object ValidationErrors:
   def of[K, M](em: ErrorMessage[K, M], ems: ErrorMessage[K, M]*): ValidationErrors[K, M] =
     ValidationErrors(NonEmptyList(em, ems.toList))
