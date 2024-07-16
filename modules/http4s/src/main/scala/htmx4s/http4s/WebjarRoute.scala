@@ -80,9 +80,7 @@ object WebjarRoute:
     def apply(segment: String)(name: String, version: String, path: String*): Webjar =
       Webjar(segment, name, version, path.toList)
     def htmx(version: String): Webjar = Webjar("htmx")("htmx.org", version, "dist")
-    val htmx1911 = htmx("1.9.11")
-    val htmx1912 = htmx("1.9.12")
-    val htmx2 = htmx("2.0.0")
+    val htmx2 = htmx("2.0.1")
 
   val defaultExtensions = Set(
     ".js",
