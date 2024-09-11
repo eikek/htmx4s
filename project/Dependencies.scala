@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object V {
-    val scala3 = "3.4.2"
+    val scala3 = "3.4.3"
     val doobie = "1.0.0-RC5"
     val h2 = "2.3.230"
     val htmx = "2.0.1"
