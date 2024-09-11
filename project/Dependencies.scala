@@ -3,11 +3,11 @@ import sbt._
 object Dependencies {
 
   object V {
-    val scala3 = "3.4.2"
+    val scala3 = "3.4.3"
     val doobie = "1.0.0-RC5"
-    val h2 = "2.3.230"
+    val h2 = "2.3.232"
     val htmx = "2.0.2"
-    val http4s = "0.23.27"
+    val http4s = "0.23.28"
     val http4sScalatags = "0.25.2"
     val munit = "1.0.0"
     val munitCatsEffect = "2.0.0"
