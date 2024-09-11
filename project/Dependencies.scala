@@ -7,7 +7,7 @@ object Dependencies {
     val doobie = "1.0.0-RC5"
     val h2 = "2.3.230"
     val htmx = "2.0.1"
-    val http4s = "0.23.27"
+    val http4s = "0.23.28"
     val http4sScalatags = "0.25.2"
     val munit = "1.0.0"
     val munitCatsEffect = "2.0.0"
