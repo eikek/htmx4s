@@ -4,6 +4,7 @@ import cats.data.Kleisli
 import cats.data.OptionT
 import cats.effect.Sync
 
+import htmx4s.constants.HtmxCurrentVersion
 import htmx4s.http4s.WebjarRoute.Webjar
 
 import org.http4s.*
@@ -80,7 +81,7 @@ object WebjarRoute:
     def apply(segment: String)(name: String, version: String, path: String*): Webjar =
       Webjar(segment, name, version, path.toList)
     def htmx(version: String): Webjar = Webjar("htmx")("htmx.org", version, "dist")
-    val htmx2 = htmx("2.0.1")
+    val htmx2 = htmx(HtmxCurrentVersion.value)
 
   val defaultExtensions = Set(
     ".js",
