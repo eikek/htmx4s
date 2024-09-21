@@ -79,7 +79,7 @@ val buildInfoSettings = Seq(
 
 val constants = project
   .in(file("modules/constants"))
-  .enablePlugins(HtmxSourceGeneratorPlugin)
+  .enablePlugins(HtmxSourceGeneratorPlugin, HtmxCurrentVersion)
   .disablePlugins(RevolverPlugin)
   .settings(sharedSettings)
   .settings(testSettings)
