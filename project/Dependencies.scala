@@ -13,7 +13,7 @@ object Dependencies {
     val munitScalaCheck = "1.0.0"
     val munitCatsEffect = "2.0.0"
     val scalatags = "0.13.1"
-    val scribe = "3.15.2"
+    val scribe = "3.15.3"
   }
 
   val doobie = Seq(
