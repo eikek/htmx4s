@@ -19,7 +19,7 @@ val sharedSettings = Seq(
       "-encoding",
       "UTF-8",
       "-language:higherKinds",
-      "-Xkind-projector:underscores",
+      "-Ykind-projector:underscores",
       "-Werror",
       "-indent",
       "-print-lines",
