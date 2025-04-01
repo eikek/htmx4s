@@ -11,7 +11,7 @@ object Dependencies {
     val http4sScalatags = "0.25.2"
     val munit = "1.1.0"
     val munitScalaCheck = "1.1.0"
-    val munitCatsEffect = "2.0.0"
+    val munitCatsEffect = "2.1.0"
     val scalatags = "0.13.1"
     val scribe = "3.16.0"
   }
