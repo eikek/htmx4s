@@ -1,13 +1,13 @@
 package htmx4s.example.contacts
 
+import scalatags.Text.TypedTag
+import scalatags.Text.all.doctype
+
 import cats.syntax.all.*
 
 import htmx4s.example.contacts.Model.*
 import htmx4s.example.lib.Model.*
 import htmx4s.scalatags.Bundle.*
-
-import scalatags.Text.TypedTag
-import scalatags.Text.all.doctype
 
 object Views:
   lazy val searchControls: Set[String] = Set(Id.searchBtn, Id.searchInput)

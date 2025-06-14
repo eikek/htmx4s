@@ -1,12 +1,12 @@
 package htmx4s.http4s.headers
 
-import htmx4s.constants.HtmxResponseHeaders
-
 import org.http4s.Header
 import org.http4s.ParseResult
 import org.http4s.Uri
 import org.http4s.headers.Location
 import org.typelevel.ci.CIString
+
+import htmx4s.constants.HtmxResponseHeaders
 
 final case class HxRedirect(uri: Uri)
 

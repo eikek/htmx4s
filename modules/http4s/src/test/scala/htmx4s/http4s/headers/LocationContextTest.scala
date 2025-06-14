@@ -1,7 +1,8 @@
 package htmx4s.http4s.headers
 
-import munit.FunSuite
 import org.http4s.implicits.*
+
+import munit.FunSuite
 
 class LocationContextTest extends FunSuite:
 

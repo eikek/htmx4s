@@ -1,19 +1,18 @@
 package htmx4s.example.contacts
 
-import cats.effect.*
-import cats.syntax.all.*
-
-import htmx4s.example.contacts.Model.*
-import htmx4s.example.contacts.Model.ContactEditForm
-import htmx4s.example.contacts.Views.notFoundPage
-import htmx4s.example.lib.Model.*
-import htmx4s.http4s.Htmx4sDsl
-import htmx4s.http4s.headers.HxTrigger
-
 import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+
+import cats.effect.*
+import cats.syntax.all.*
+
+import htmx4s.example.contacts.Model.*
+import htmx4s.example.contacts.Views.notFoundPage
+import htmx4s.example.lib.Model.*
+import htmx4s.http4s.Htmx4sDsl
+import htmx4s.http4s.headers.HxTrigger
 
 final class Routes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
   def routes: HttpRoutes[F] = HttpRoutes.of:

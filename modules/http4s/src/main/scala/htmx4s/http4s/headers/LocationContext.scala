@@ -1,11 +1,11 @@
 package htmx4s.http4s.headers
 
-import cats.parse.Parser as P
-import cats.syntax.all.*
-
 import org.http4s.ParseFailure
 import org.http4s.ParseResult
 import org.http4s.Uri
+
+import cats.parse.Parser as P
+import cats.syntax.all.*
 
 final case class LocationContext(
     path: Uri,
