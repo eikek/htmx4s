@@ -1,9 +1,9 @@
 package htmx4s.http4s.headers
 
-import htmx4s.constants.HtmxResponseHeaders
-
 import org.http4s.Header
 import org.typelevel.ci.CIString
+
+import htmx4s.constants.HtmxResponseHeaders
 
 final case class HxRefresh(flag: Boolean)
 

@@ -1,14 +1,14 @@
 package htmx4s.http4s
 
+import org.http4s.*
+import org.http4s.Uri.Path
+
 import cats.data.Kleisli
 import cats.data.OptionT
 import cats.effect.Sync
 
 import htmx4s.constants.HtmxCurrentVersion
 import htmx4s.http4s.WebjarRoute.Webjar
-
-import org.http4s.*
-import org.http4s.Uri.Path
 
 final class WebjarRoute[F[_]: Sync](
     webjars: Seq[Webjar],

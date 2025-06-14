@@ -1,10 +1,10 @@
 package htmx4s.http4s.headers
 
-import htmx4s.constants.HtmxRequestHeaders
-
 import org.http4s.Header
 import org.http4s.ParseResult
 import org.typelevel.ci.CIString
+
+import htmx4s.constants.HtmxRequestHeaders
 
 final case class HxTrigger(name: String)
 

@@ -1,10 +1,10 @@
 package htmx4s.http4s.headers
 
-import cats.data.NonEmptyList
-
 import org.http4s.Header
 import org.http4s.ParseFailure
 import org.typelevel.ci.CIString
+
+import cats.data.NonEmptyList
 
 sealed trait Vary
 

@@ -1,5 +1,8 @@
 package htmx4s.example.contacts
 
+import org.http4s.FormDataDecoder
+import org.http4s.FormDataDecoder.*
+
 import cats.data.Validated
 import cats.syntax.all.*
 
@@ -7,9 +10,6 @@ import htmx4s.example.contacts.ContactError.*
 import htmx4s.example.lib.Model.*
 import htmx4s.http4s.util.ValidationDsl.*
 import htmx4s.http4s.util.ValidationErrors
-
-import org.http4s.FormDataDecoder
-import org.http4s.FormDataDecoder.*
 
 object Model:
 

@@ -2,16 +2,17 @@ package htmx4s.example
 
 import scala.concurrent.duration.*
 
+import org.http4s.HttpRoutes
+import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.Router
+import org.http4s.server.middleware.Logger as Http4sLogger
+
 import cats.effect.*
 
 import htmx4s.example.lib.ContactDb
 import htmx4s.http4s.WebjarRoute
 
 import com.comcast.ip4s.*
-import org.http4s.HttpRoutes
-import org.http4s.ember.server.EmberServerBuilder
-import org.http4s.server.Router
-import org.http4s.server.middleware.Logger as Http4sLogger
 
 object Main extends IOApp:
   // refers to our own js and css stuff, version is not needed
