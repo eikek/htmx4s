@@ -9,7 +9,7 @@ object Dependencies {
     val htmx = "2.0.7"
     val http4s = "0.23.30"
     val http4sScalatags = "0.25.2"
-    val munit = "1.1.1"
+    val munit = "1.1.2"
     val munitScalaCheck = "1.2.0"
     val munitCatsEffect = "2.1.0"
     val scalatags = "0.13.1"
