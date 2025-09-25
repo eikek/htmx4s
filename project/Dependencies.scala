@@ -5,7 +5,7 @@ object Dependencies {
   object V {
     val scala3 = "3.3.6"
     val doobie = "1.0.0-RC10"
-    val h2 = "2.3.232"
+    val h2 = "2.4.240"
     val htmx = "2.0.7"
     val http4s = "0.23.31"
     val http4sScalatags = "0.25.2"
