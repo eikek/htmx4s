@@ -14,9 +14,9 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
       ciPkgs = with pkgs; [
-        devshell-tools.packages.${system}.sbt17
+        devshell-tools.packages.${system}.mill1_17
         jdk17
-        tailwindcss
+        tailwindcss_4
         terser
       ];
       devshellPkgs =

@@ -1,0 +1,218 @@
+package build.project
+
+import com.goyeau.mill.scalafix.StyleModule
+import mill.*, api.*, scalalib.*, publish.*
+import build.project.Deps
+import mill.util.Jvm
+
+trait Htmx4sExampleModule extends ScalaModule with StyleModule {
+  def scalaVersion = Deps.scalaVersion
+  def scalacOptions = super.scalacOptions() ++ Seq(
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-encoding",
+    "UTF-8",
+    "-language:higherKinds",
+    "-Werror",
+    "-indent",
+    "-print-lines",
+    "-Wunused:all"
+  )
+}
+
+trait Htmx4sModule extends ScalaModule with StyleModule { outer =>
+  def scalaVersion = Deps.scalaVersion
+  def scalacOptions = super.scalacOptions() ++ Seq(
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-encoding",
+    "UTF-8",
+    "-language:higherKinds",
+    "-Werror",
+    "-indent",
+    "-print-lines",
+    "-Wunused:all"
+  )
+  def consoleScalacOptions = scalacOptions().filterNot(_ == "-Werror")
+
+  def moduleDir = {
+    val pre = super.moduleDir
+    pre / os.up / "modules" / pre.last
+  }
+
+  def artifactName: T[String] = Task {
+    val n = super.artifactName()
+    s"htmx4s-$n"
+  }
+
+  def extraTestModuleDeps: Seq[JavaModule] = Seq.empty
+
+  object test extends ScalaTests with TestModule.Munit with StyleModule {
+    def artifactName: T[String] = Task {
+      val n = super.artifactName()
+      s"htmx4s-$n"
+    }
+
+    override def moduleDeps: Seq[JavaModule] =
+      super.moduleDeps ++ outer.extraTestModuleDeps
+    def mvnDeps = Deps.munit
+  }
+}
+
+trait HtmxGeneratorModule extends Module:
+  def htmxRepoUrl: String = "https://github.com/bigskysoftware/htmx"
+  def htmxReferencePath: os.SubPath = "www/content/reference.md"
+  def htmxSettings: Model.HtmxSettings = Model.HtmxSettings()
+  def htmxRepoRef: String
+
+  def generateHtmxFiles: T[Seq[PathRef]] = Task {
+    val repo = Generator.downloadRepository(Task.log, htmxRepoUrl, htmxRepoRef, Task.dest)
+    val data = Generator.readMarkdown(Task.log, repo, htmxReferencePath, htmxSettings)
+    Generator.generate(data, htmxSettings, Task.dest).map(PathRef(_))
+  }
+
+  def generateHtmxCurrentVersion: T[Seq[PathRef]] = Task {
+    val file = HtmxCurrentVersion.generate(Task.dest)
+    Seq(PathRef(file))
+  }
+
+
+trait Htmx4sPublishModule extends PublishModule with SonatypeCentralPublishModule {
+  def pomSettings = PomSettings(
+    description = "fit file parser for Scala 3",
+    organization = "com.github.eikek",
+    url = "https://github.com/eikek/htmx4s",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github("eikek", "htmx4s"),
+    developers = Seq(Developer("eikek", "eikek", "https://github.com/eikek"))
+  )
+}
+
+object Tasks {
+  def find(ev: Evaluator, cmd: String) =
+    ev.resolveTasks(Seq(s"__.$cmd"), SelectMode.Separated, true, true).get
+}
+
+trait CiModule extends Module {
+  def ci(ev: Evaluator) = {
+    val checkStyles = Tasks.find(ev, "checkStyle")
+    val publish = Tasks.find(ev, "publishLocal")
+    val readme = Tasks.find(ev, "mdoc")
+    val tests = Tasks.find(ev, "test")
+    Task.Command(exclusive = true) {
+      Task.sequence(checkStyles ++ tests ++ readme ++ publish)()
+      ()
+    }
+  }
+}
+
+trait TailwindModule extends Module {
+
+  def tailwindInput = Task.Source(moduleDir / "webapp" / "css" / "index.css")
+  def tailwindConfig = Task.Source(moduleDir / "webapp" / "css" / "tailwind.config.js")
+
+  def artifactName: T[String]
+
+  def tailwindCssPath: T[String] = Task.Input {
+    Task.env.getOrElse("TAILWINDCSS_PATH", "tailwindcss").toString
+  }
+
+  def tailwindCss: Task[Seq[PathRef]] = Task {
+    val outDir = Task.dest / "META-INF" / "resources" / "webjars" / artifactName()
+    os.makeDir.all(outDir)
+    val css = tailwindInput().path
+    val tw = tailwindConfig().path
+    val out = outDir / "index.css"
+    Task.log.info("Creating css stylesheets with tailwindcss")
+    os.proc(tailwindCssPath(), "-m", "-i", css, "-c", tw, "-o", out).call(cwd = moduleDir)
+    Seq(PathRef(Task.dest))
+  }
+}
+
+trait JavascriptModule extends Module {
+  def artifactName: T[String]
+
+  def jsSources = Task.Source(moduleDir / "webapp" / "js")
+  def terserPath: T[String] = Task.Input {
+    Task.env.getOrElse("TERSER_PATH", "terser").toString
+  }
+
+  def javascript: T[Seq[PathRef]] = Task {
+    val outDir = Task.dest / "META-INF" / "resources" / "webjars" / artifactName()
+    os.makeDir.all(outDir)
+
+    Task.log.info("Copying js files…")
+    val js = jsSources().path
+    os.list(js).map(os.copy.matching { case p if p.ext == "js" => outDir / p.last })
+
+    Task.log.info("Running terser to minify js files…")
+    val inJs = os.list(outDir)
+    os.proc(
+      terserPath(),
+      "--compress",
+      "--mangle",
+      "-o",
+      outDir / "all.min.js",
+      "--",
+      inJs
+    ).call(cwd = moduleDir)
+
+    Seq(PathRef(Task.dest))
+  }
+}
+
+// https://github.com/hmf/mdocMill/blob/main/build.sc
+trait MdocModule extends ScalaModule {
+  def scalaVersion = Deps.scalaVersion
+  def scalaMdocVersion: T[String] = Task("2.7.2")
+
+  def scalaMdocDep: T[Dep] = Task(mvn"org.scalameta::mdoc:${scalaMdocVersion()}")
+
+  def mdocSources: T[Seq[PathRef]]
+
+  // https://github.com/scalameta/mdoc/issues/702
+  // MDoc has its own dependencies on the Scala compiler and uses those
+  // To use a later version of Scala 3, we need to download that version of the compiler
+  def mdocDep = Task {
+    Seq(
+      mvn"org.scalameta::mdoc:${scalaMdocVersion()}"
+        .exclude("org.scala-lang" -> "scala3-compiler_3")
+        .exclude("org.scala-lang" -> "scala3-library_3"),
+      mvn"org.scala-lang::scala3-compiler:${scalaVersion()}"
+    ).map(Lib.depToBoundDep(_, scalaVersion()))
+  }
+
+  // Only downloads source code
+  // resolveDeps(mdocDep, sources = true)
+  def mDocLibs = Task(defaultResolver().classpath(mdocDep()))
+
+  val separator = java.io.File.pathSeparatorChar
+  def toArgument(p: Seq[os.Path]) = p.iterator.mkString(s"$separator")
+  def toArg(p: Set[os.Path]) = p.mkString(s"$separator")
+  def toArgumentDebug(p: Seq[os.Path]) = p.iterator.mkString(s"\n")
+
+  def mdoc(): Command[PathRef] = Task.Command {
+    val cp = runClasspath().map(_.path)
+    //val cp = compileClasspath().map(_.path)
+    val rp = mDocLibs().map(_.path)
+    val dir = Task.dest.toIO.getAbsolutePath
+    val dirParams = mdocSources()
+      .map(pr => Seq(s"--in", pr.path.toIO.getAbsolutePath, "--out", dir))
+      .iterator
+      .flatten
+    val docClasspath = toArgument(cp)
+    val params = Seq("--classpath", s"$docClasspath") ++ dirParams.toSeq
+
+    Jvm.callProcess(
+      mainClass = "mdoc.Main",
+      classPath = rp.toSeq,
+      jvmArgs = forkArgs(),
+      env = forkEnv(),
+      mainArgs = params,
+      cwd = forkWorkingDir()
+    )
+    PathRef(Task.dest)
+  }
+}

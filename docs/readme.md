@@ -23,9 +23,8 @@ htmx value is readily available in the IDE.
 This module contains traits that have all htmx attributes, events,
 request/response header names and classes as scala values.
 
-sbt:
 ```
-libraryDependencies += "com.github.eikek" %% "htmx4s-constants" % "$VERSION"
+"com.github.eikek" %% "htmx4s-constants" % "$VERSION"
 ```
 
 ## htmx4s-scalatags
@@ -35,9 +34,8 @@ gives access to all the htmx attributes.
 
 The htmx markdown documentation is also used here to generate code.
 
-sbt:
 ```
-libraryDependencies += "com.github.eikek" %% "htmx4s-scalatags" % "$VERSION"
+"com.github.eikek" %% "htmx4s-scalatags" % "$VERSION"
 ```
 
 
@@ -48,14 +46,14 @@ htmx operations and some other small utilities.
 
 sbt:
 ```
-libraryDependencies += "com.github.eikek" %% "htmx4s-http4s" % "$VERSION"
+"com.github.eikek" %% "htmx4s-http4s" % "$VERSION"
 ```
 
 Additionally, the `http4s-scalatags` utility library is probably
 useful to include as well:
 
 ```
-libraryDependencies += "org.http4s" %% "http4s-scalatags" % "version"
+"org.http4s" %% "http4s-scalatags" % "version"
 ```
 
 
@@ -75,23 +73,24 @@ demonstrating using this library. It based on the following idea:
 - [tailwindcss](https://tailwindcss.com) is used for styles, using
   their provided binary to create the final css file
 
-JS and CSS is build by sbt via the `TailwindCssPlugin` and `JsPlugin`,
-respectively (in the `project/` folder). The resulting files will be
-copied into the location used by the webjar standard and they can be
-served via the `WebjarRoute` as any other webjar.
+JS and CSS is build by sbt via the `TailwindModule` and
+`JavascriptModule`, respectively (in `project/module.mill`). The
+resulting files will be copied into the location used by the webjar
+standard and they can be served via the `WebjarRoute` as any other
+webjar.
 
 ## Running the example
 
 The `tailwindcss` binary and `terser` is required, as well as
-[sbt](https://scala-sbt.org). If you have [nix](https://nixos.org/nix)
-installed, you can run `nix develop` to drop into a shell with
-everything ready.
+[mill](https://mill-build.org/). If you have
+[nix](https://nixos.org/nix) installed, you can run `nix develop` to
+drop into a shell with everything ready.
 
-Start sbt in the source root and run
+Start the example server with:
 
 ```
-sbt> example/reStart
+mill example.run
 ```
 
-in sbt shell. Then go to `http://localhost:8888/ui/contacts` to try
+Then go to `http://localhost:8888/ui/contacts` to try
 out the contact app.

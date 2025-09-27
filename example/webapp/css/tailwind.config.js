@@ -2,11 +2,11 @@
 
 const colors = require('tailwindcss/colors')
 
-module.exports = {
-    darkMode: 'media',
-    content: [ "example/src/main/scala/htmx4s/example/contacts/Views.scala",
-               "example/src/main/css/keep.txt",
+export default {
+    content: [ "src/**/*.scala",
+               "webapp/css/keep.txt",
              ],
+    darkMode: 'media',
     theme: {
         extend: {
             screens: {
