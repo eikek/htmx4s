@@ -1,0 +1,40 @@
+package build.project
+
+import org.eclipse.jgit.api.Git
+import scala.util.{Failure, Success, Try}
+import mill.*, api.*
+
+object Version:
+  def get =
+    val git = Git.open(BuildCtx.workspaceRoot.toIO)
+    val hashLength = 8
+    val status = git.status().call()
+    val isDirty = status.hasUncommittedChanges
+    val snapshotSuffix = "-SNAPSHOT"
+    val describeResult =
+      Try(git.describe().setTags(true).setMatch("v[0-9]*").setAlways(true).call())
+    describeResult match
+      case Failure(ex) => Result.Failure(s"git describe failed: ${ex.getMessage}")
+      case Success(description) =>
+        val taggedRegex = """v(\d.*?)(?:-(\d+)-g([\da-f]+))?""".r
+        val untaggedRegex = """([\da-f]+)""".r
+        description match {
+          case taggedRegex(tag, distance, hash) =>
+            val distanceHash = Option(distance).fold {
+              if (isDirty) s"-1-${hash}"
+              else ""
+            } { distance =>
+              if (isDirty) s"-${distance.toInt + 1}-${hash}"
+              else s"-$distance-${hash.take(hashLength)}$snapshotSuffix"
+            }
+            Result.Success(s"$tag$distanceHash")
+          case untaggedRegex(hash) =>
+            Result.Success(s"${hash.take(hashLength)}$snapshotSuffix")
+          case _ => Result.Failure(s"Unexpected git describe output: $description")
+        }
+
+  def headCommit =
+    val git = Git.open(BuildCtx.workspaceRoot.toIO)
+    Try(git.describe().setTags(true).setMatch("v[0-9]*").setAlways(true).call())
+      .map(_.takeRight(7))
+      .getOrElse("no-commit")

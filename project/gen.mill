@@ -1,54 +1,37 @@
-import sbt._
+package build.project
 
-object HtmxSourceGeneratorPlugin extends AutoPlugin {
+import mill.api.*
 
-  object autoImport {
-    type HtmxFileSetting = Model.FileSetting
-    val HtmxFileSetting = Model.FileSetting
-    type HtmxSettings = Model.HtmxSettings
-    val HtmxSettings = Model.HtmxSettings
+object HtmxCurrentVersion:
+  def generate(out: os.Path) =  {
+    val target = out / "HtmxCurrentVersion.scala"
+    os.makeDir.all(out)
 
-    val htmxRepositoryUrl = settingKey[String]("The git url to the htmx repository")
-    val htmxRepositoryRef = settingKey[String]("The git ref to use")
-    val htmxRepositoryTarget =
-      settingKey[File]("The target directory for downloading htmx repo")
-    val htmxReferencePath = settingKey[String]("The path to the reference.md file")
-    val htmxGenerateSettings = settingKey[HtmxSettings](
-      "Configuration to control source code generation"
-    )
-
-    val htmxDownloadRepository = taskKey[File]("Download htmx repository")
-    val htmxParseReferenceDoc =
-      taskKey[Model.HtmxConstants]("Parse htmx reference.md file")
-    val htmxGenerateSources = taskKey[Seq[File]]("Generate source files")
+    val fields = s"""  val value: String = "${Deps.htmxVersion}""""
+    val content = s"""package htmx4s.constants
+                     |object HtmxCurrentVersion {
+                     |$fields
+                     |}
+                     |""".stripMargin
+    os.write.over(target, content)
+    target
   }
 
-  import autoImport._
 
-  val htmxSettings = Seq(
-    htmxRepositoryUrl := "https://github.com/bigskysoftware/htmx",
-    htmxRepositoryTarget := (Compile / Keys.target).value / "htmx-repo",
-    htmxReferencePath := "www/content/reference.md",
-    htmxGenerateSettings := HtmxSettings(),
-    htmxDownloadRepository := {
-      val logger = Keys.streams.value.log
-      val repo = htmxRepositoryUrl.value
-      val refspec = htmxRepositoryRef.value
-      val output = htmxRepositoryTarget.value
-      RepositorySync.synchronize(logger, repo, Some(refspec), output)
-      output
-    },
-    htmxParseReferenceDoc := {
-      val repo = htmxDownloadRepository.value
-      val refmd = htmxReferencePath.value
-      val settings = htmxGenerateSettings.value
-      MarkdownParser.readAll(repo, refmd, settings)
-    },
-    htmxGenerateSources := {
-      val data = htmxParseReferenceDoc.value
-      val out = (Compile / Keys.sourceManaged).value / "htmx-constants"
-      val settings = htmxGenerateSettings.value
-      IO.createDirectory(out)
+object Generator:
+
+  def downloadRepository(logger: Logger, repoUrl: String, refspec: String, output: os.Path) =
+    val target = output / "htmx-repo"
+    os.makeDir.all(output)
+    RepositorySync.synchronize(logger, repoUrl, Some(refspec), target)
+    target
+
+  def readMarkdown(logger: Logger, repo: os.Path, refpath: os.SubPath, settings: Model.HtmxSettings): Model.HtmxConstants =
+    MarkdownParser.readAll(repo, refpath, settings)
+
+  def generate(data: Model.HtmxConstants, settings: Model.HtmxSettings, out: os.Path) =
+      os.makeDir.all(out)
+
       val coreAttrFile = settings.coreAttrs
         .whenEnabled(s => Model.Source("HtmxCoreAttributes", data.coreAttributes, s))
         .map(_.writeTo(out))
@@ -83,13 +66,6 @@ object HtmxSourceGeneratorPlugin extends AutoPlugin {
         respHeaderFile,
         eventFile
       ).flatten
-    },
-    Compile / Keys.sourceGenerators += htmxGenerateSources.taskValue
-  )
-
-  override def projectSettings: Seq[Setting[_]] =
-    htmxSettings
-}
 
 object Model {
   final case class FileSetting(
@@ -163,9 +139,9 @@ object Model {
          |$suffix""".stripMargin
     }
 
-    def writeTo(dir: File): File = {
+    def writeTo(dir: os.Path): os.Path = {
       val file = dir / s"${name}.scala"
-      IO.write(file, render)
+      os.write.over(file, render)
       file
     }
   }
@@ -239,8 +215,8 @@ object MarkdownParser {
   }
 
   def readAll(
-      repo: File,
-      referencePath: String,
+      repo: os.Path,
+      referencePath: os.SubPath,
       settings: HtmxSettings
   ): Model.HtmxConstants = {
     def read(a: String, loadDocs: Boolean) = readTable(repo, referencePath, a, loadDocs)
@@ -255,8 +231,8 @@ object MarkdownParser {
   }
 
   def readTable(
-      repo: File,
-      referencePath: String,
+      repo: os.Path,
+      referencePath: os.SubPath,
       anchor: String,
       loadLinkDoc: Boolean
   ): List[Model.Const] = {
@@ -285,10 +261,8 @@ object MarkdownParser {
       )
   }
 
-  def readMd(refFile: File, link: String): String =
-    scala.io.Source
-      .fromFile(refFile.getParentFile() / link)
-      .getLines()
+  def readMd(refFile: os.Path, link: String): String =
+    os.read.lines(refFile / os.up / os.SubPath(link.drop(1)))
       .drop(3)
       .mkString("\n")
       .trim
@@ -296,16 +270,16 @@ object MarkdownParser {
   def tableRows(t: Table) =
     t.table.getAllContentRows.asScala.drop(1)
 
-  def parse(file: File): List[DocElement] = {
+  def parse(file: os.Path): List[DocElement] = {
     val options = new MutableDataSet()
     options.set(Parser.EXTENSIONS, List[Extension](TablesExtension.create()).asJava)
     val parser = Parser.builder(options).build()
-    val mkdown = scala.io.Source.fromFile(file).mkString
+    val mkdown = os.read(file)
     val doc = parser.parse(mkdown)
     val handler = new Handler
     val tableExtract = new TableExtractingVisitor(DataHolder.NULL)
     val visitor = new NodeVisitor(
-      new VisitHandler(classOf[Heading], handler.visit)
+      new VisitHandler(classOf[Heading], handler.visit(_))
     )
     visitor.visit(doc)
     val headers = handler.headers
@@ -335,23 +309,24 @@ object MarkdownParser {
 }
 
 object RepositorySync {
-  import com.github.sbt.git._
-  import java.io.File
   import org.eclipse.jgit.api.ResetCommand.ResetType
+  import org.eclipse.jgit.lib.{ObjectId, Ref}
+  import org.eclipse.jgit.api.Git
+  import scala.jdk.CollectionConverters.*
 
   def synchronize(
       logger: Logger,
       repo: String,
       refspec: Option[String],
-      target: File
+      target: os.Path
   ): Unit =
-    if (target.exists) updateRepository(logger, target, refspec)
+    if (os.exists(target)) updateRepository(logger, target, refspec)
     else cloneRepository(logger, repo, refspec, target)
 
-  def updateRepository(logger: Logger, base: File, refspec: Option[String]) = {
+  def updateRepository(logger: Logger, base: os.Path, refspec: Option[String]) = {
     logger.info(s"Updating repository at $base")
-    val git = JGit(base)
-    git.porcelain.fetch().call()
+    val git = Git.open(base.toIO)
+    git.fetch().call()
     switchBranch(logger, git, refspec)
   }
 
@@ -359,20 +334,42 @@ object RepositorySync {
       logger: Logger,
       repo: String,
       refspec: Option[String],
-      target: File
+      target: os.Path
   ): Unit = {
     logger.info(s"Downloading repository $repo to $target")
-    val jgit = JGit.clone(repo, target)
+    val jgit = Git.cloneRepository.setURI(repo).setRemote("origin").setBare(false).setCloneAllBranches(true).setDirectory(target.toIO).call()
     switchBranch(logger, jgit, refspec)
   }
 
-  def switchBranch(logger: Logger, git: JGit, refspec: Option[String]) =
+  def headCommit(git: Git): Option[ObjectId] =
+    Option(git.getRepository.resolve("HEAD"))
+
+  def tagHash(git: Git, tag: Ref): String = {
+    val peeled = git.getRepository.getRefDatabase.peel(tag)
+    val id =
+      if (peeled.getPeeledObjectId ne null)
+        peeled.getPeeledObjectId
+      else
+        peeled.getObjectId
+    id.getName
+  }
+
+  def currentTags(git: Git): Seq[String] = {
+    for {
+      hash <- headCommit(git).map(_.name).toSeq
+      unpeeledTag <- git.tagList.call().asScala.toSeq
+      taghash = tagHash(git, unpeeledTag)
+      if taghash == hash
+      ref = unpeeledTag.getName
+      if ref `startsWith` "refs/tags/"
+    } yield ref drop 10
+  }
+  def switchBranch(logger: Logger, git: Git, refspec: Option[String]) =
     refspec match {
       case Some(ref)
-          if ref != git.branch && !git.currentTags.contains(ref) && !git.headCommitSha
-            .contains(ref) =>
+          if ref != git.getRepository.getBranch && !currentTags(git).contains(ref) && !headCommit(git).map(_.name).contains(ref) =>
         logger.info(s"Changing to $ref")
-        val cmd = git.porcelain.reset()
+        val cmd = git.reset()
         cmd.setMode(ResetType.HARD)
         cmd.setRef(ref)
         val res = cmd.call()

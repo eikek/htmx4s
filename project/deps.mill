@@ -1,0 +1,49 @@
+package build.project
+
+import mill._, scalalib._
+
+object Deps {
+  val scalaVersion = "3.3.6"
+
+  val htmxVersion = "2.0.7"
+
+  val scalatags = Seq(
+    mvn"com.lihaoyi::scalatags:0.13.1"
+  )
+
+  val http4s = Seq(
+    mvn"org.http4s::http4s-core:0.23.32",
+    mvn"org.http4s::http4s-dsl:0.23.32"
+  )
+
+  val htmx = Seq(
+    mvn"org.webjars.npm:htmx.org:${htmxVersion}"
+  )
+
+  val doobie = Seq(
+    mvn"org.tpolecat::doobie-core:1.0.0-RC10",
+    mvn"org.tpolecat::doobie-hikari:1.0.0-RC10"
+  )
+
+  val h2 = Seq(
+    mvn"com.h2database:h2:2.4.240"
+  )
+
+  val http4sEmber = Seq(
+    mvn"org.http4s::http4s-ember-server:0.23.32"
+  )
+  val http4sScalatags = Seq(
+    mvn"org.http4s::http4s-scalatags:0.25.2"
+  )
+
+  val scribe = Seq(
+    mvn"com.outr::scribe-cats:3.16.1",
+    mvn"com.outr::scribe:3.16.1",
+    mvn"com.outr::scribe-slf4j:3.16.1"
+  )
+  val munit = Seq(
+    mvn"org.scalameta::munit-scalacheck:1.1.0",
+    mvn"org.scalameta::munit:1.1.1",
+    mvn"org.typelevel::munit-cats-effect:2.1.0"
+  )
+}

@@ -1,0 +1,112 @@
+//| mill-version: 1.0.3
+//| mvnDeps:
+//| - io.github.hoangmaihuy::mill-universal-packager::0.2.0
+//| - com.lihaoyi::mill-contrib-buildinfo:$MILL_VERSION
+//| - com.lihaoyi::mill-contrib-jmh:$MILL_VERSION
+//| - com.goyeau::mill-scalafix::0.6.0
+//| - com.vladsch.flexmark:flexmark-all:0.64.8
+//| - org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r
+package build
+
+import build.project.{
+  CiModule,
+  Htmx4sModule,
+  Htmx4sPublishModule,
+  MdocModule,
+  Deps,
+  Version,
+  Generator,
+  Model,
+  HtmxGeneratorModule,
+  Htmx4sExampleModule,
+  TailwindModule,
+  JavascriptModule
+}
+import io.github.hoangmaihuy.mill.packager.archetypes.JavaAppPackagingModule
+import mill.contrib.buildinfo.BuildInfo
+import mill._, scalalib._
+import contrib.jmh.JmhModule
+import mill.api.{BuildCtx, Result}
+
+object `package` extends Module with CiModule { outer =>
+  def appVersion = Task.Input(Version.get)
+
+  def writeVersion() = Task.Command {
+    val file = Task.dest / "version.txt"
+    os.write(file, appVersion())
+    Task.log.info(s"Version written to: $file")
+  }
+
+  def makeReadme() = Task.Command {
+    val readme = docs.mdoc()()
+    val src = readme.path / "readme.md"
+    val trg = moduleDir / "README.md"
+    Task.log.info(s"Copy $src -> $trg")
+    os.copy(src, trg, replaceExisting = true)
+  }
+
+  def headCommit = Task.Input(Version.headCommit)
+
+  object constants extends Htmx4sModule with Htmx4sPublishModule with HtmxGeneratorModule {
+    def publishVersion = outer.appVersion
+
+    def htmxSettings = Model.HtmxSettings.default
+      .modifyAll(_.withPackage("htmx4s.constants"))
+    def htmxRepoRef = s"v${Deps.htmxVersion}"
+    def generatedSources: T[Seq[PathRef]] = Task(persistent = true) {
+      generateHtmxFiles() ++ generateHtmxCurrentVersion()
+    }
+  }
+
+  object scalatags extends Htmx4sModule with Htmx4sPublishModule with HtmxGeneratorModule {
+    def publishVersion = outer.appVersion
+
+    def htmxRepoRef = s"v${Deps.htmxVersion}"
+    def htmxSettings = Model.HtmxSettings.default
+      .modifyAll(_.disabled)
+      .modifyAll(
+        _.withPackage("htmx4s.scalatags")
+          .withImports(List("scalatags.generic._"))
+          .withNameWrap(n => s"attr($n)")
+          .withTypeParams("[Builder, Output <: FragT, FragT]")
+          .withSuperclasses(List("Util[Builder, Output, FragT]"))
+          .noCompanion
+      )
+      .modifyCoreAttrs(_.enabled)
+      .modifyAdditionalAttrs(_.enabled)
+
+    def generatedSources: T[Seq[PathRef]] = Task(persistent = true) {
+      generateHtmxFiles()
+    }
+
+    def mvnDeps = super.mvnDeps() ++ Deps.scalatags
+  }
+
+
+  object http4s extends Htmx4sModule with Htmx4sPublishModule {
+    def publishVersion = outer.appVersion
+
+    def mvnDeps = super.mvnDeps() ++ Deps.http4s
+    def moduleDeps = Seq(constants)
+  }
+
+  object example extends Htmx4sExampleModule with TailwindModule with JavascriptModule {
+    def moduleDeps = Seq(constants, scalatags, http4s)
+    def mvnDeps = super.mvnDeps() ++
+      Deps.htmx ++
+      Deps.http4sEmber ++
+      Deps.http4sScalatags ++
+      Deps.scribe ++
+      Deps.doobie ++
+      Deps.h2
+
+    def resources: T[Seq[PathRef]] = Task {
+      super.resources() ++ tailwindCss() ++ javascript()
+    }
+  }
+
+  object docs extends MdocModule {
+    def mdocSources = Task.Sources(super.moduleDir / "readme.md")
+    def moduleDeps = Seq(constants, scalatags)
+  }
+}
