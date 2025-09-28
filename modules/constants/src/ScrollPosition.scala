@@ -4,6 +4,8 @@ enum ScrollPosition:
   case Top
   case Bottom
 
+  lazy val render: String = productPrefix.toLowerCase()
+
 object ScrollPosition:
   def fromString(s: String): Either[String, ScrollPosition] =
     if (s.equalsIgnoreCase("top")) Right(Top)

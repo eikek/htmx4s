@@ -7,6 +7,9 @@ final case class SwapValue(style: SwapStyle, modifiers: Seq[SwapModifier] = Seq.
   val render: String = s"${style.render}${modifierStr}"
 
 object SwapValue:
+  def of(style: SwapStyle, mods: SwapModifier*): SwapValue =
+    SwapValue(style, mods)
+
   def parse(s: String): Either[String, SwapValue] =
     val (style, rest) = s.span(!_.isWhitespace)
     val modifiers = rest.trim

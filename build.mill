@@ -52,7 +52,6 @@ object `package` extends Module with CiModule { outer =>
 
     def htmxSettings = Model.HtmxSettings.default
       .modifyAll(_.withPackage("htmx4s.constants"))
-    def htmxRepoRef = s"v${Deps.htmxVersion}"
     def generatedSources: T[Seq[PathRef]] = Task(persistent = true) {
       generateHtmxFiles() ++ generateHtmxCurrentVersion()
     }
@@ -61,7 +60,6 @@ object `package` extends Module with CiModule { outer =>
   object scalatags extends Htmx4sModule with Htmx4sPublishModule with HtmxGeneratorModule {
     def publishVersion = outer.appVersion
 
-    def htmxRepoRef = s"v${Deps.htmxVersion}"
     def htmxSettings = Model.HtmxSettings.default
       .modifyAll(_.disabled)
       .modifyAll(
@@ -80,6 +78,7 @@ object `package` extends Module with CiModule { outer =>
     }
 
     def mvnDeps = super.mvnDeps() ++ Deps.scalatags
+    def moduleDeps = Seq(constants)
   }
 
 
