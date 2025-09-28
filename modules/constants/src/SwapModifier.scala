@@ -20,17 +20,17 @@ object SwapModifier:
   case object IgnoreTitle extends SwapModifier:
     val render = s"ignoreTitle:true"
 
-  final case class Show(pos: ScrollPosition, selector: Option[String])
+  final case class Show(pos: ScrollPosition, selector: Option[String] = None)
       extends SwapModifier:
     val render = selector match
-      case Some(sel) => s"show:${sel}${pos.productPrefix.toLowerCase}"
-      case None      => s"show:${pos.productPrefix.toLowerCase}"
+      case Some(sel) => s"show:${sel}${pos.render}"
+      case None      => s"show:${pos.render}"
 
-  final case class Scroll(pos: ScrollPosition, selector: Option[String])
+  final case class Scroll(pos: ScrollPosition, selector: Option[String] = None)
       extends SwapModifier:
     val render = selector match
-      case Some(sel) => s"scroll:${sel}${pos.productPrefix.toLowerCase}"
-      case None      => s"scroll:${pos.productPrefix.toLowerCase}"
+      case Some(sel) => s"scroll:${sel}${pos.render}"
+      case None      => s"scroll:${pos.render}"
 
   final case class FocusScroll(flag: Boolean) extends SwapModifier:
     val render = s"focus-scroll:$flag"

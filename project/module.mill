@@ -65,9 +65,9 @@ trait HtmxGeneratorModule extends Module:
   def htmxRepoUrl: String = "https://github.com/bigskysoftware/htmx"
   def htmxReferencePath: os.SubPath = "www/content/reference.md"
   def htmxSettings: Model.HtmxSettings = Model.HtmxSettings()
-  def htmxRepoRef: String
+  def htmxRepoRef: String = s"v${Deps.htmxVersion}"
 
-  def generateHtmxFiles: T[Seq[PathRef]] = Task {
+  def generateHtmxFiles: T[Seq[PathRef]] = Task(persistent = true) {
     val repo = Generator.downloadRepository(Task.log, htmxRepoUrl, htmxRepoRef, Task.dest)
     val data = Generator.readMarkdown(Task.log, repo, htmxReferencePath, htmxSettings)
     Generator.generate(data, htmxSettings, Task.dest).map(PathRef(_))
